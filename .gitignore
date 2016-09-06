@@ -1,0 +1,17 @@
+# 3rd party deps
+c_src/deps
+
+# Object files
+**/*.o
+
+# Compiled BEAM files
+ebin
+
+# Rebar's state dir
+.rebar
+
+# Private dir
+priv
+
+# If the VM crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
