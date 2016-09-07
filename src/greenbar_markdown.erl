@@ -16,6 +16,8 @@ init() ->
       Error
   end.
 
+analyze(Text) when is_list(Text) ->
+  analyze(iolist_to_binary(Text));
 analyze(Text) when is_binary(Text) ->
   case parse(Text) of
     {ok, []} ->
