@@ -22,7 +22,9 @@
 #include "erl_nif.h"
 #include "buffer.h"
 
+#include <iostream>
 #include <vector>
+#include <string>
 #include "gb_common.hpp"
 #include "markdown_analyzer.hpp"
 
@@ -42,6 +44,14 @@ static ErlNifFunc nif_funcs[] =
   {"parse", 1, gb_parse, 0}
 };
 
+static ERL_NIF_TERM make_atom(ErlNifEnv* env, const char* name) {
+  ERL_NIF_TERM atom;
+  if (enif_make_existing_atom(env, name, &atom, ERL_NIF_LATIN1) == false) {
+    atom = enif_make_atom(env, name);
+  }
+  return atom;
+}
+
 static int on_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info) {
   gb_priv_s* priv_data = (gb_priv_s*) enif_alloc(sizeof(gb_priv_s));
 
@@ -51,57 +61,32 @@ static int on_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info) {
   }
 
   // Frequently used atoms
-  if (enif_make_existing_atom(env, "ok", &priv_data->gb_atom_ok, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_ok = enif_make_atom(env, "ok");
-  }
-  if (enif_make_existing_atom(env, "error", &priv_data->gb_atom_error, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_error = enif_make_atom(env, "error");
-  }
-  if (enif_make_existing_atom(env, "out_of_memory", &priv_data->gb_atom_out_of_memory, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_out_of_memory = enif_make_atom(env, "out_of_memory");
-  }
-  if (enif_make_existing_atom(env, "name", &priv_data->gb_atom_name, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_name = enif_make_atom(env, "name");
-  }
-  if (enif_make_existing_atom(env, "text", &priv_data->gb_atom_text, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_text = enif_make_atom(env, "text");
-  }
-  if (enif_make_existing_atom(env, "newline", &priv_data->gb_atom_newline, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_newline = enif_make_atom(env, "newline");
-  }
-  if (enif_make_existing_atom(env, "fixed_width", &priv_data->gb_atom_fixed_width, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_fixed_width = enif_make_atom(env, "fixed_width");
-  }
-  if (enif_make_existing_atom(env, "header", &priv_data->gb_atom_header, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_header = enif_make_atom(env, "header");
-  }
-  if (enif_make_existing_atom(env, "italics", &priv_data->gb_atom_italics, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_italics = enif_make_atom(env, "italics");
-  }
-  if (enif_make_existing_atom(env, "bold", &priv_data->gb_atom_bold, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_bold = enif_make_atom(env, "bold");
-  }
-  if (enif_make_existing_atom(env, "link", &priv_data->gb_atom_link, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_link = enif_make_atom(env, "link");
-  }
-  if (enif_make_existing_atom(env, "level", &priv_data->gb_atom_level, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_level = enif_make_atom(env, "level");
-  }
-  if (enif_make_existing_atom(env, "url", &priv_data->gb_atom_url, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_url = enif_make_atom(env, "url");
-  }
-  if (enif_make_existing_atom(env, "ordered_list", &priv_data->gb_atom_ordered_list, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_ordered_list = enif_make_atom(env, "ordered_list");
-  }
-  if (enif_make_existing_atom(env, "unordered_list", &priv_data->gb_atom_unordered_list, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_unordered_list = enif_make_atom(env, "unordered_list");
-  }
-  if (enif_make_existing_atom(env, "list_item", &priv_data->gb_atom_list_item, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_list_item = enif_make_atom(env, "list_item");
-  }
-  if (enif_make_existing_atom(env, "children", &priv_data->gb_atom_children, ERL_NIF_LATIN1) == false) {
-    priv_data->gb_atom_children = enif_make_atom(env, "children");
-  }
+  priv_data->gb_atom_ok = make_atom(env, "ok");
+  priv_data->gb_atom_error = make_atom(env, "error");
+  priv_data->gb_atom_out_of_memory = make_atom(env, "out of memory");
+  priv_data->gb_atom_children = make_atom(env, "children");
+  priv_data->gb_atom_unknown = make_atom(env, "unknown");
+  priv_data->gb_atom_name = make_atom(env, "name");
+  priv_data->gb_atom_text = make_atom(env, "text");
+  priv_data->gb_atom_newline = make_atom(env, "newline");
+  priv_data->gb_atom_fixed_width = make_atom(env, "fixed_width");
+  priv_data->gb_atom_header = make_atom(env, "header");
+  priv_data->gb_atom_italics = make_atom(env, "italics");
+  priv_data->gb_atom_bold = make_atom(env, "bold");
+  priv_data->gb_atom_link = make_atom(env, "link");
+  priv_data->gb_atom_level = make_atom(env, "level");
+  priv_data->gb_atom_url = make_atom(env, "url");
+  priv_data->gb_atom_ordered_list = make_atom(env, "ordered_list");
+  priv_data->gb_atom_unordered_list = make_atom(env, "unordered_list");
+  priv_data->gb_atom_list_item = make_atom(env, "list_item");
+  priv_data->gb_atom_table = make_atom(env, "table");
+  priv_data->gb_atom_table_header = make_atom(env, "table_header");
+  priv_data->gb_atom_table_row = make_atom(env, "table_row");
+  priv_data->gb_atom_table_cell = make_atom(env, "table_cell");
+  priv_data->gb_atom_alignment = make_atom(env, "alignment");
+  priv_data->gb_atom_left = make_atom(env, "left");
+  priv_data->gb_atom_right = make_atom(env, "right");
+  priv_data->gb_atom_center = make_atom(env, "center");
 
   *priv = (void *) priv_data;
   return 0;
