@@ -6,11 +6,16 @@ BASEDIR := $(abspath $(CURDIR)/..)
 PROJECT ?= $(notdir $(BASEDIR))
 PROJECT := $(strip $(PROJECT))
 
+SOURCES := nif/gb_info_util.cc \
+	   nif/gb_markdown_leaf_info.cc \
+	   nif/gb_markdown_parent_info.cc \
+	   nif/gb_markdown_analyzer.cc \
+	   nif/gb_markdown_nif.cc
+
 ERTS_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s/erts-~s/include/\", [code:root_dir(), erlang:system_info(version)]).")
 ERL_INTERFACE_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s\", [code:lib_dir(erl_interface, include)]).")
 ERL_INTERFACE_LIB_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s\", [code:lib_dir(erl_interface, lib)]).")
 
-C_SRC_DIR = $(CURDIR)/nif
 C_SRC_OUTPUT ?= $(CURDIR)/../priv/$(PROJECT).so
 
 # System type and C compiler/flags.
@@ -48,7 +53,6 @@ cpp_verbose = $(cpp_verbose_$(V))
 link_verbose_0 = @echo " LD    " $(@F);
 link_verbose = $(link_verbose_$(V))
 
-SOURCES := $(shell find $(C_SRC_DIR) -type f \( -name "*.c" -o -name "*.C" -o -name "*.cc" -o -name "*.cpp" \))
 OBJECTS = $(addsuffix .o, $(basename $(SOURCES)))
 
 COMPILE_C = $(c_verbose) $(CC) $(CFLAGS) $(CPPFLAGS) -c
@@ -58,17 +62,17 @@ $(C_SRC_OUTPUT): deps/hoedown/libhoedown.a $(OBJECTS)
 	@mkdir -p $(BASEDIR)/priv/
 	$(link_verbose) $(CXX) $(OBJECTS) $(LDFLAGS) $(LDLIBS) -o $(C_SRC_OUTPUT) deps/hoedown/libhoedown.a
 
-%.o: %.c
-	$(COMPILE_C) $(OUTPUT_OPTION) $<
-
-%.o: %.cc
+%.o: %.cc nif/include/gb_common.hpp
 	$(COMPILE_CPP) $(OUTPUT_OPTION) $<
 
-%.o: %.C
-	$(COMPILE_CPP) $(OUTPUT_OPTION) $<
+# Source file dependencies
 
-%.o: %.cpp
-	$(COMPILE_CPP) $(OUTPUT_OPTION) $<
+nif/gb_markdown_nif.cc: nif/gb_markdown_analyzer.cc nif/include/gb_common.hpp
+
+nif/gb_markdown_leaf_info.cc: nif/gb_info_util.cc
+nif/gb_markdown_parent_info.cc: nif/gb_info_util.cc
+nif/gb_markdown_analyzer.cc: nif/gb_markdown_leaf_info.cc nif/gb_markdown_parent_info.cc nif/include/markdown_analyzer.hpp
+nif/gb_info_util.cc: nif/include/gb_common.hpp nif/include/markdown_info.hpp
 
 clean:
 	@rm -f $(C_SRC_OUTPUT) $(OBJECTS)
