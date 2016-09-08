@@ -17,11 +17,10 @@ static void gb_markdown_header(hoedown_buffer *ob, const hoedown_buffer *content
 static void gb_markdown_list(hoedown_buffer *ob, const hoedown_buffer *content, hoedown_list_flags flags, const hoedown_renderer_data *data);
 static void gb_markdown_listitem(hoedown_buffer *ob, const hoedown_buffer *content, hoedown_list_flags flags, const hoedown_renderer_data *data);
 static void gb_markdown_paragraph(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data);
-// void gb_markdown_table(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data);
-// void gb_markdown_table_header(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data);
-// void gb_markdown_table_body(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data);
-// void gb_markdown_table_row(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data);
-// void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *content, hoedown_table_flags flags, const hoedown_renderer_data *data);
+static void gb_markdown_table(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data);
+static void gb_markdown_table_header(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data);
+static void gb_markdown_table_row(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data);
+static void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *content, hoedown_table_flags flags, const hoedown_renderer_data *data);
 
 static int gb_markdown_autolink(hoedown_buffer *ob, const hoedown_buffer *link, hoedown_autolink_type type, const hoedown_renderer_data *data);
 static int gb_markdown_codespan(hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_renderer_data *data);
@@ -33,8 +32,11 @@ static int gb_markdown_link(hoedown_buffer *ob, const hoedown_buffer *content, c
 static void gb_markdown_normal_text(hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_renderer_data *data);
 
 #define GB_HOEDOWN_EXTENSIONS (hoedown_extensions) (HOEDOWN_EXT_DISABLE_INDENTED_CODE | HOEDOWN_EXT_SPACE_HEADERS | \
-                                                    HOEDOWN_EXT_MATH_EXPLICIT | HOEDOWN_EXT_NO_INTRA_EMPHASIS)
-#define GB_MAX_NESTING 4
+                                                    HOEDOWN_EXT_MATH_EXPLICIT | HOEDOWN_EXT_NO_INTRA_EMPHASIS | \
+                                                    HOEDOWN_EXT_TABLES)
+#define GB_MAX_NESTING 16
+
+#define DBG_HERE std::cout << __FILE__ << ":" << __LINE__ << "\n"
 
 namespace greenbar {
 
@@ -62,6 +64,10 @@ namespace greenbar {
     analyzer->linebreak = gb_markdown_linebreak;
     analyzer->list = gb_markdown_list;
     analyzer->listitem = gb_markdown_listitem;
+    analyzer->table = gb_markdown_table;
+    analyzer->table_header = gb_markdown_table_header;
+    analyzer->table_row = gb_markdown_table_row;
+    analyzer->table_cell = gb_markdown_table_cell;
     analyzer->normal_text = gb_markdown_normal_text;
     analyzer->opaque = (void *) new std::vector<greenbar::MarkdownInfo*>();
     return analyzer;
@@ -275,4 +281,85 @@ static void gb_markdown_listitem(hoedown_buffer *ob, const hoedown_buffer *conte
     }
   }
   collector->push_back(item);
+}
+
+static void gb_markdown_table(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
+  auto collector = get_collector(data);
+  if (collector->empty()) {
+    return;
+  }
+  bool has_header = false;
+  auto table = new greenbar::MarkdownParentInfo(greenbar::MD_TABLE);
+  auto child = collector->back();
+  while (child->get_type() == greenbar::MD_TABLE_HEADER || child->get_type() == greenbar::MD_TABLE_ROW) {
+    collector->pop_back();
+    if (child->get_type() == greenbar::MD_TABLE_HEADER) {
+      has_header = true;
+    } else {
+      table->add_child(child);
+      if (collector->empty()) {
+        break;
+      }
+    }
+    child = collector->back();
+  }
+  if (has_header) {
+    table->set_child_type(table->last_child(), greenbar::MD_TABLE_ROW, greenbar::MD_TABLE_HEADER);
+  }
+  collector->push_back(table);
+}
+static void gb_markdown_table_header(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
+  auto collector = get_collector(data);
+  if (collector->empty()) {
+    return;
+  }
+  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_TABLE_HEADER));
+}
+
+static void gb_markdown_table_row(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
+  auto collector = get_collector(data);
+  if (collector->empty()) {
+    return;
+  }
+  auto row = new greenbar::MarkdownParentInfo(greenbar::MD_TABLE_ROW);
+  auto child = collector->back();
+  while (child->get_type() == greenbar::MD_TABLE_CELL) {
+    collector->pop_back();
+    row->add_child(child);
+    if (collector->empty()) {
+      break;
+    }
+    child = collector->back();
+  }
+  collector->push_back(row);
+}
+
+static void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *content, hoedown_table_flags flags, const hoedown_renderer_data *data) {
+  auto collector = get_collector(data);
+  if (collector->empty()) {
+    return;
+  }
+  auto cell = new greenbar::MarkdownParentInfo(greenbar::MD_TABLE_CELL);
+  while (true) {
+    if (collector->empty()) {
+      break;
+    }
+    auto child = collector->back();
+    if (child->get_type() == greenbar::MD_TABLE_CELL || child->get_type() == greenbar::MD_TABLE_ROW ||
+        child->get_type() == greenbar::MD_TABLE_HEADER || child->get_type() == greenbar::MD_TABLE) {
+      break;
+    }
+    collector->pop_back();
+    cell->add_child(child);
+  }
+  if (flags & HOEDOWN_TABLE_ALIGN_LEFT) {
+    cell->set_alignment(greenbar::MD_ALIGN_LEFT);
+  }
+  if (flags & HOEDOWN_TABLE_ALIGN_RIGHT) {
+    cell->set_alignment(greenbar::MD_ALIGN_RIGHT);
+  }
+  if (flags & HOEDOWN_TABLE_ALIGN_CENTER) {
+    cell->set_alignment(greenbar::MD_ALIGN_CENTER);
+  }
+  collector->push_back(cell);
 }

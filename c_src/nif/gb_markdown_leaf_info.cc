@@ -9,10 +9,19 @@ namespace greenbar {
     text_ = "";
     url_ = "";
     level_ = -1;
+    alignment_ = MD_ALIGN_NONE;
   }
 
   MarkdownInfoType MarkdownLeafInfo::get_type() {
     return type_;
+  }
+
+  MarkdownAlignment MarkdownLeafInfo::get_alignment() {
+    return alignment_;
+  }
+
+  void MarkdownLeafInfo::set_alignment(MarkdownAlignment align) {
+    alignment_ = align;
   }
 
   void MarkdownLeafInfo::set_type(MarkdownInfoType type) {
@@ -54,59 +63,9 @@ namespace greenbar {
         enif_make_map_put(env, retval, priv_data->gb_atom_url, url, &retval);
       }
     }
-    return retval;
-  }
-
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf) {
-    auto retval = new MarkdownLeafInfo(info_type);
-    retval->set_text(std::string((char*) buf->data, buf->size));
-    return retval;
-  }
-
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf, int info_level) {
-    auto retval = new MarkdownLeafInfo(info_type);
-    retval->set_text(std::string((char*) buf->data, buf->size));
-    retval->set_level(info_level);
-    return retval;
-  }
-
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* title, const hoedown_buffer* link) {
-    auto retval = new MarkdownLeafInfo(info_type);
-    retval->set_text(std::string((char*) title->data, title->size));
-    retval->set_url(std::string((char*) link->data, link->size));
-    return retval;
-  }
-
-  MarkdownLeafInfo* as_leaf(MarkdownInfo* info) {
-    if (info) {
-      return dynamic_cast<MarkdownLeafInfo*>(info);
+    if (this->alignment_ != MD_ALIGN_NONE) {
+      enif_make_map_put(env, retval, priv_data->gb_atom_alignment, alignment_to_atom(this->alignment_, priv_data), &retval);
     }
-    return nullptr;
+    return retval;
   }
-
-  ERL_NIF_TERM type_to_atom(greenbar::MarkdownInfoType type, gb_priv_s* priv_data) {
-    switch(type) {
-    case greenbar::MD_EOL:
-      return priv_data->gb_atom_newline;
-    case greenbar::MD_FIXED_WIDTH:
-      return priv_data->gb_atom_fixed_width;
-    case greenbar::MD_HEADER:
-      return priv_data->gb_atom_header;
-    case greenbar::MD_ITALICS:
-      return priv_data->gb_atom_italics;
-    case greenbar::MD_BOLD:
-      return priv_data->gb_atom_bold;
-    case greenbar::MD_LINK:
-      return priv_data->gb_atom_link;
-    case greenbar::MD_ORDERED_LIST:
-      return priv_data->gb_atom_ordered_list;
-    case greenbar::MD_UNORDERED_LIST:
-      return priv_data->gb_atom_unordered_list;
-    case greenbar::MD_LIST_ITEM:
-      return priv_data->gb_atom_list_item;
-    default:
-      return priv_data->gb_atom_text;
-    }
-  }
-
 }
