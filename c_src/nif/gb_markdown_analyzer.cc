@@ -33,7 +33,7 @@ static void gb_markdown_normal_text(hoedown_buffer *ob, const hoedown_buffer *te
 
 #define GB_HOEDOWN_EXTENSIONS (hoedown_extensions) (HOEDOWN_EXT_DISABLE_INDENTED_CODE | HOEDOWN_EXT_SPACE_HEADERS | \
                                                     HOEDOWN_EXT_MATH_EXPLICIT | HOEDOWN_EXT_NO_INTRA_EMPHASIS | \
-                                                    HOEDOWN_EXT_TABLES)
+                                                    HOEDOWN_EXT_TABLES | HOEDOWN_EXT_FENCED_CODE)
 #define GB_MAX_NESTING 16
 
 #define DBG_HERE std::cout << __FILE__ << ":" << __LINE__ << "\n"
