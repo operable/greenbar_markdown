@@ -345,8 +345,20 @@ static void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *con
       break;
     }
     auto child = collector->back();
-    if (child->get_type() == greenbar::MD_TABLE_CELL || child->get_type() == greenbar::MD_TABLE_ROW ||
-        child->get_type() == greenbar::MD_TABLE_HEADER || child->get_type() == greenbar::MD_TABLE) {
+    bool table_done = false;
+    switch(child->get_type()) {
+    case greenbar::MD_TABLE_CELL:
+    case greenbar::MD_TABLE_ROW:
+    case greenbar::MD_TABLE_HEADER:
+    case greenbar::MD_TABLE:
+    case greenbar::MD_EOL:
+      table_done = true;
+      break;
+    default:
+      table_done = false;
+      break;
+    }
+    if (table_done) {
       break;
     }
     collector->pop_back();
