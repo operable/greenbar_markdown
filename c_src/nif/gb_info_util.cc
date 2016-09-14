@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstddef>
 #include "erl_nif.h"
 #include "markdown_info.hpp"
 #include "gb_common.hpp"
@@ -9,21 +10,29 @@ namespace greenbar {
 
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf) {
     auto retval = new MarkdownLeafInfo(info_type);
-    retval->set_text(std::string((char*) buf->data, buf->size));
+    if (buf != nullptr) {
+      retval->set_text(std::string((char*) buf->data, buf->size));
+    }
     return retval;
   }
 
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf, int info_level) {
     auto retval = new MarkdownLeafInfo(info_type);
-    retval->set_text(std::string((char*) buf->data, buf->size));
+    if (buf != nullptr) {
+      retval->set_text(std::string((char*) buf->data, buf->size));
+    }
     retval->set_level(info_level);
     return retval;
   }
 
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* title, const hoedown_buffer* link) {
     auto retval = new MarkdownLeafInfo(info_type);
-    retval->set_text(std::string((char*) title->data, title->size));
-    retval->set_url(std::string((char*) link->data, link->size));
+    if (title != nullptr) {
+      retval->set_text(std::string((char*) title->data, title->size));
+    }
+    if (link != nullptr) {
+      retval->set_url(std::string((char*) link->data, link->size));
+    }
     return retval;
   }
 
