@@ -35,16 +35,16 @@ namespace greenbar {
     type_ = type;
   }
 
-  int MarkdownParentInfo::last_child() {
+  size_t MarkdownParentInfo::last_child() {
     if (children_.empty()) {
       return -1;
     }
     return children_.size() - 1;
   }
 
-  bool MarkdownParentInfo::set_child_type(int index, MarkdownInfoType old_type, MarkdownInfoType new_type) {
+  bool MarkdownParentInfo::set_child_type(size_t index, MarkdownInfoType old_type, MarkdownInfoType new_type) {
     bool retval = false;
-    if (index > -1 && index < children_.size()) {
+    if (!children_.empty() && index < children_.size()) {
       auto child = children_.at(index);
       if (child->get_type() == old_type) {
         auto leaf_info = as_leaf(child);

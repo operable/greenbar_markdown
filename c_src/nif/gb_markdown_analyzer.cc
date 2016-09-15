@@ -124,7 +124,7 @@ static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownIn
       retval = true;
     }
   }
-  return true;
+  return retval;
 }
 
 static void gb_markdown_blockcode(hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_buffer *lang,

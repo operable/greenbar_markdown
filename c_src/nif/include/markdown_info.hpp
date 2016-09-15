@@ -91,9 +91,9 @@ namespace greenbar {
     MarkdownInfoType get_type();
     MarkdownAlignment get_alignment();
     void set_alignment(MarkdownAlignment align);
-    int last_child();
+    size_t last_child();
     void set_type(MarkdownInfoType type);
-    bool set_child_type(int index, MarkdownInfoType old_type, MarkdownInfoType new_type);
+    bool set_child_type(size_t index, MarkdownInfoType old_type, MarkdownInfoType new_type);
   };
 
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buffer);
