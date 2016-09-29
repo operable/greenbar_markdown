@@ -273,7 +273,7 @@ static void gb_markdown_listitem(hoedown_buffer *ob, const hoedown_buffer *conte
       }
       child = collector->back();
       if (child->get_type() == greenbar::MD_ORDERED_LIST || child->get_type() == greenbar::MD_UNORDERED_LIST ||
-          child->get_type() == greenbar::MD_LIST_ITEM) {
+          child->get_type() == greenbar::MD_LIST_ITEM || child->get_type() == greenbar::MD_EOL) {
         break;
       }
       collector->pop_back();
