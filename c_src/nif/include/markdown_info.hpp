@@ -15,6 +15,7 @@ namespace greenbar {
     MD_EOL,
     MD_TEXT,
     MD_FIXED_WIDTH,
+    MD_FIXED_WIDTH_BLOCK,
     MD_HEADER,
     MD_ITALICS,
     MD_BOLD,

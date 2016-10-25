@@ -11,6 +11,7 @@ typedef struct {
   ERL_NIF_TERM gb_atom_text;
   ERL_NIF_TERM gb_atom_newline;
   ERL_NIF_TERM gb_atom_fixed_width;
+  ERL_NIF_TERM gb_atom_fixed_width_block;
   ERL_NIF_TERM gb_atom_header;
   ERL_NIF_TERM gb_atom_italics;
   ERL_NIF_TERM gb_atom_bold;

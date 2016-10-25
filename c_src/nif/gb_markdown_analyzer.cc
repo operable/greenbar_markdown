@@ -130,7 +130,7 @@ static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownIn
 static void gb_markdown_blockcode(hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_buffer *lang,
                                   const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
-  collector->push_back(greenbar::new_leaf(greenbar::MD_FIXED_WIDTH, text));
+  collector->push_back(greenbar::new_leaf(greenbar::MD_FIXED_WIDTH_BLOCK, text));
 }
 
 static void gb_markdown_header(hoedown_buffer *ob, const hoedown_buffer *content, int level,

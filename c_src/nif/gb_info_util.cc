@@ -58,6 +58,8 @@ namespace greenbar {
       return priv_data->gb_atom_text;
     case greenbar::MD_FIXED_WIDTH:
       return priv_data->gb_atom_fixed_width;
+    case greenbar::MD_FIXED_WIDTH_BLOCK:
+      return priv_data->gb_atom_fixed_width_block;
     case greenbar::MD_HEADER:
       return priv_data->gb_atom_header;
     case greenbar::MD_ITALICS:
