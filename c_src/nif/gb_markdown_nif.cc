@@ -70,6 +70,7 @@ static int on_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info) {
   priv_data->gb_atom_text = make_atom(env, "text");
   priv_data->gb_atom_newline = make_atom(env, "newline");
   priv_data->gb_atom_fixed_width = make_atom(env, "fixed_width");
+  priv_data->gb_atom_fixed_width_block = make_atom(env, "fixed_width_block");
   priv_data->gb_atom_header = make_atom(env, "header");
   priv_data->gb_atom_italics = make_atom(env, "italics");
   priv_data->gb_atom_bold = make_atom(env, "bold");

@@ -25,6 +25,12 @@ namespace greenbar {
     return retval;
   }
 
+  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const std::string& text) {
+    auto retval = new MarkdownLeafInfo(info_type);
+    retval->set_text(text);
+    return retval;
+  }
+
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* title, const hoedown_buffer* link) {
     auto retval = new MarkdownLeafInfo(info_type);
     if (title != nullptr) {
@@ -58,6 +64,8 @@ namespace greenbar {
       return priv_data->gb_atom_text;
     case greenbar::MD_FIXED_WIDTH:
       return priv_data->gb_atom_fixed_width;
+    case greenbar::MD_FIXED_WIDTH_BLOCK:
+      return priv_data->gb_atom_fixed_width_block;
     case greenbar::MD_HEADER:
       return priv_data->gb_atom_header;
     case greenbar::MD_ITALICS:

@@ -15,6 +15,7 @@ namespace greenbar {
     MD_EOL,
     MD_TEXT,
     MD_FIXED_WIDTH,
+    MD_FIXED_WIDTH_BLOCK,
     MD_HEADER,
     MD_ITALICS,
     MD_BOLD,
@@ -98,6 +99,7 @@ namespace greenbar {
 
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buffer);
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buffer, int info_level);
+  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const std::string& text);
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* text, const hoedown_buffer* url);
 
   MarkdownLeafInfo* as_leaf(MarkdownInfo* info);
