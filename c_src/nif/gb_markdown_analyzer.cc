@@ -44,7 +44,7 @@ namespace greenbar {
     // Create renderer
     auto analyzer = (markdown_analyzer *) malloc(sizeof(markdown_analyzer));
     if (!analyzer) {
-      return NULL;
+      return nullptr;
     }
     // Zero out all fields
     memset(analyzer, 0, sizeof(markdown_analyzer));
@@ -78,7 +78,7 @@ namespace greenbar {
   }
 
   void free_markdown_analyzer(markdown_analyzer* analyzer) {
-    if (analyzer->opaque != NULL) {
+    if (analyzer->opaque != nullptr) {
       auto collector = (std::vector<greenbar::MarkdownInfo*>*) analyzer->opaque;
       for (size_t i = 0; i < collector->size(); i++) {
         delete collector->at(i);
@@ -129,6 +129,9 @@ static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownIn
 
 static void gb_markdown_blockcode(hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_buffer *lang,
                                   const hoedown_renderer_data *data) {
+  if (text == nullptr || text->size == 0 || (text->size == 1 && text->data[0] == '\n')) {
+    return;
+  }
   auto collector = get_collector(data);
   if (text->size > 1) {
     uint8_t last_char = text->data[text->size - 1];
@@ -154,21 +157,11 @@ static void gb_markdown_header(hoedown_buffer *ob, const hoedown_buffer *content
 static void gb_markdown_paragraph(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
   collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
-  switch(content->size) {
-    // If content == "" return
-  case 0:
+  if (content == nullptr || content->size == 0 || (content->size == 1 && content->data[0] == '\n')) {
     return;
-    // If content == "\n" return
-    // else fall through to default case
-  case 1:
-    if (memcmp(content->data, "\n", 1) == 0) {
-      return;
-    }
-    // Add text and EOL node
-  default:
-    collector->push_back(greenbar::new_leaf(greenbar::MD_TEXT, content));
-    collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
   }
+  collector->push_back(greenbar::new_leaf(greenbar::MD_TEXT, content));
+  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
 }
 
 static int gb_markdown_autolink(hoedown_buffer *ob, const hoedown_buffer *link, hoedown_autolink_type type, const hoedown_renderer_data *data) {
@@ -178,6 +171,9 @@ static int gb_markdown_autolink(hoedown_buffer *ob, const hoedown_buffer *link, 
 }
 
 static int gb_markdown_codespan(hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_renderer_data *data) {
+  if (text == nullptr || text->size == 0 || (text->size == 1 && text->data[0] == '\n')) {
+    return 1;
+  }
   auto collector = get_collector(data);
   collector->push_back(greenbar::new_leaf(greenbar::MD_FIXED_WIDTH, text));
   return 1;
