@@ -31,16 +31,33 @@ analyze(Text) when is_binary(Text) ->
 parse(_Text) -> ?nif_error.
 
 build_nif_path() ->
-    case code:priv_dir(greenbar_markdown) of
+  case escript_path() of
+    undefined ->
+      case code:priv_dir(greenbar_markdown) of
         Path when is_list(Path) ->
-            {ok, filename:join([Path, "greenbar_markdown"])};
+          {ok, filename:join([Path, "greenbar_markdown"])};
         {error, bad_name} ->
-            case code:which(?MODULE) of
-                Filename when is_list(Filename) ->
-                    {ok, filename:join([filename:dirname(Filename),
-                                        "..","priv",
-                                        "greenbar_markdown"])};
-                Reason when is_atom(Reason) ->
-                    {error, Reason}
-            end
-    end.
+          case code:which(?MODULE) of
+            Filename when is_list(Filename) ->
+              {ok, filename:join([filename:dirname(Filename),
+                                  "..","priv",
+                                  "greenbar_markdown"])};
+            Reason when is_atom(Reason) ->
+              {error, Reason}
+          end
+      end;
+    EscriptPath ->
+      SharedLibPath = filename:join([EscriptPath, "greenbar_markdown"]),
+      {ok, SharedLibPath}
+  end.
+
+escript_path() ->
+  case catch escript:script_name() of
+    {'EXIT', _} ->
+      undefined;
+    %% Running inside iex
+    "--no-halt" ->
+      undefined;
+    Path ->
+      filename:dirname(filename:absname(Path))
+  end.
