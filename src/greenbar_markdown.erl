@@ -59,5 +59,11 @@ escript_path() ->
     "--no-halt" ->
       undefined;
     Path ->
-      filename:dirname(filename:absname(Path))
+      case filename:basename(Path) of
+        "mix" ->
+          %% Running under mix
+          undefined;
+        false ->
+          filename:dirname(filename:absname(Path))
+      end
   end.
