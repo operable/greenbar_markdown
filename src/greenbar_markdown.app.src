@@ -1,5 +1,5 @@
 {application, greenbar_markdown,
  [{description, "Greenbar's NIF interface to libhoedown"},
-  {vsn, "0.16.0"},
+  {vsn, "0.16.2"},
   {modules, []},
   {applications, [kernel, stdlib]}]}.
