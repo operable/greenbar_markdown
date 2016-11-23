@@ -98,7 +98,7 @@ static greenbar::NodeStack* get_collector(const hoedown_renderer_data *data) {
 }
 
 
-static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownInfoType previousType, greenbar::MarkdownInfoType newType) {
+static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownNodeType previousType, greenbar::MarkdownNodeType newType) {
   bool retval = false;
   auto collector = get_collector(data);
   if (!collector->empty()) {
@@ -111,7 +111,7 @@ static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownIn
   return retval;
 }
 
-static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownInfoType previousType, greenbar::MarkdownInfoType newType,
+static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownNodeType previousType, greenbar::MarkdownNodeType newType,
                          int level) {
   bool retval = false;
   auto collector = get_collector(data);

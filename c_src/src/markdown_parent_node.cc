@@ -4,7 +4,7 @@
 
 namespace greenbar {
 
-  MarkdownParentNode::MarkdownParentNode(MarkdownInfoType info_type) {
+  MarkdownParentNode::MarkdownParentNode(MarkdownNodeType info_type) {
     type_ = info_type;
     alignment_ = MD_ALIGN_NONE;
   }
@@ -19,7 +19,7 @@ namespace greenbar {
     children_.push_back(child);
   }
 
-  MarkdownInfoType MarkdownParentNode::get_type() {
+  MarkdownNodeType MarkdownParentNode::get_type() {
     return type_;
   }
 
@@ -31,7 +31,7 @@ namespace greenbar {
     alignment_ = align;
   }
 
-  void MarkdownParentNode::set_type(MarkdownInfoType type) {
+  void MarkdownParentNode::set_type(MarkdownNodeType type) {
     type_ = type;
   }
 
@@ -42,7 +42,7 @@ namespace greenbar {
     return children_.size() - 1;
   }
 
-  bool MarkdownParentNode::set_child_type(size_t index, MarkdownInfoType old_type, MarkdownInfoType new_type) {
+  bool MarkdownParentNode::set_child_type(size_t index, MarkdownNodeType old_type, MarkdownNodeType new_type) {
     bool retval = false;
     if (!children_.empty() && index < children_.size()) {
       auto child = children_.at(index);

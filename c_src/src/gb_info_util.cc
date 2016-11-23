@@ -8,7 +8,7 @@
 
 namespace greenbar {
 
-  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf) {
+  MarkdownLeafNode* new_leaf(MarkdownNodeType info_type, const hoedown_buffer* buf) {
     auto retval = new MarkdownLeafNode(info_type);
     if (buf != nullptr) {
       retval->set_text(std::string((char*) buf->data, buf->size));
@@ -16,7 +16,7 @@ namespace greenbar {
     return retval;
   }
 
-  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf, int info_level) {
+  MarkdownLeafNode* new_leaf(MarkdownNodeType info_type, const hoedown_buffer* buf, int info_level) {
     auto retval = new MarkdownLeafNode(info_type);
     if (buf != nullptr) {
       retval->set_text(std::string((char*) buf->data, buf->size));
@@ -25,13 +25,13 @@ namespace greenbar {
     return retval;
   }
 
-  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const std::string& text) {
+  MarkdownLeafNode* new_leaf(MarkdownNodeType info_type, const std::string& text) {
     auto retval = new MarkdownLeafNode(info_type);
     retval->set_text(text);
     return retval;
   }
 
-  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* title, const hoedown_buffer* link) {
+  MarkdownLeafNode* new_leaf(MarkdownNodeType info_type, const hoedown_buffer* title, const hoedown_buffer* link) {
     auto retval = new MarkdownLeafNode(info_type);
     if (title != nullptr) {
       retval->set_text(std::string((char*) title->data, title->size));
@@ -56,7 +56,7 @@ namespace greenbar {
     return nullptr;
   }
 
-  ERL_NIF_TERM type_to_atom(MarkdownInfoType type, gb_priv_s* priv_data) {
+  ERL_NIF_TERM type_to_atom(MarkdownNodeType type, gb_priv_s* priv_data) {
     switch(type) {
     case greenbar::MD_EOL:
       return priv_data->gb_atom_newline;

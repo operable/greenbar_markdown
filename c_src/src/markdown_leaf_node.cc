@@ -4,7 +4,7 @@
 
 namespace greenbar {
 
-  MarkdownLeafNode::MarkdownLeafNode(MarkdownInfoType info_type) {
+  MarkdownLeafNode::MarkdownLeafNode(MarkdownNodeType info_type) {
     type_ = info_type;
     text_ = "";
     url_ = "";
@@ -12,7 +12,7 @@ namespace greenbar {
     alignment_ = MD_ALIGN_NONE;
   }
 
-  MarkdownInfoType MarkdownLeafNode::get_type() {
+  MarkdownNodeType MarkdownLeafNode::get_type() {
     return type_;
   }
 
@@ -24,7 +24,7 @@ namespace greenbar {
     alignment_ = align;
   }
 
-  void MarkdownLeafNode::set_type(MarkdownInfoType type) {
+  void MarkdownLeafNode::set_type(MarkdownNodeType type) {
     type_ = type;
   }
 
