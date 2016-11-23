@@ -2,7 +2,7 @@
 #define GREENBAR_MARKDOWN_ANALYZER_H
 
 #include "document.h"
-#include "markdown_info.hpp"
+#include "markdown_node.hpp"
 
 typedef hoedown_renderer markdown_analyzer;
 

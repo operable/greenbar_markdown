@@ -6,11 +6,11 @@ BASEDIR := $(abspath $(CURDIR)/..)
 PROJECT ?= $(notdir $(BASEDIR))
 PROJECT := $(strip $(PROJECT))
 
-SOURCES := nif/gb_info_util.cc \
-	   nif/gb_markdown_leaf_info.cc \
-	   nif/gb_markdown_parent_info.cc \
-	   nif/gb_markdown_analyzer.cc \
-	   nif/gb_markdown_nif.cc
+SOURCES := src/gb_info_util.cc \
+	   src/gb_markdown_leaf_info.cc \
+	   src/gb_markdown_parent_info.cc \
+	   src/gb_markdown_analyzer.cc \
+	   src/gb_markdown_nif.cc
 
 ERTS_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s/erts-~s/include/\", [code:root_dir(), erlang:system_info(version)]).")
 ERL_INTERFACE_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s\", [code:lib_dir(erl_interface, include)]).")
@@ -36,8 +36,8 @@ else ifeq ($(UNAME_SYS), Linux)
 	CXXFLAGS = -O3 -Wall -pedantic -ansi
 endif
 
-CFLAGS += -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR) -I deps/hoedown/src -I nif/include
-CXXFLAGS += -std=c++11 -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR) -I deps/hoedown/src -I nif/include
+CFLAGS += -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR) -I deps/hoedown/src -I include
+CXXFLAGS += -std=c++11 -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR) -I deps/hoedown/src -I include
 
 LDLIBS += -L $(ERL_INTERFACE_LIB_DIR) -lerl_interface -lei
 LDFLAGS += -shared
@@ -62,17 +62,17 @@ $(C_SRC_OUTPUT): deps/hoedown/libhoedown.a $(OBJECTS)
 	@mkdir -p $(BASEDIR)/priv/
 	$(link_verbose) $(CXX) $(OBJECTS) $(LDFLAGS) $(LDLIBS) -o $(C_SRC_OUTPUT) deps/hoedown/libhoedown.a
 
-%.o: %.cc nif/include/gb_common.hpp
+%.o: %.cc include/gb_common.hpp
 	$(COMPILE_CPP) $(OUTPUT_OPTION) $<
 
 # Source file dependencies
 
-nif/gb_markdown_nif.cc: nif/gb_markdown_analyzer.cc nif/include/gb_common.hpp
+src/gb_markdown_nif.cc: src/gb_markdown_analyzer.cc include/gb_common.hpp
 
-nif/gb_markdown_leaf_info.cc: nif/gb_info_util.cc
-nif/gb_markdown_parent_info.cc: nif/gb_info_util.cc
-nif/gb_markdown_analyzer.cc: nif/gb_markdown_leaf_info.cc nif/gb_markdown_parent_info.cc nif/include/markdown_analyzer.hpp
-nif/gb_info_util.cc: nif/include/gb_common.hpp nif/include/markdown_info.hpp
+src/gb_markdown_leaf_info.cc: src/gb_info_util.cc
+src/gb_markdown_parent_info.cc: src/gb_info_util.cc
+src/gb_markdown_analyzer.cc: src/gb_markdown_leaf_info.cc src/gb_markdown_parent_info.cc include/markdown_analyzer.hpp
+src/gb_info_util.cc: include/gb_common.hpp include/markdown_node.hpp
 
 clean:
 	@rm -f $(C_SRC_OUTPUT) $(OBJECTS)

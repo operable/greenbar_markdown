@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <vector>
 
-#include "markdown_info.hpp"
+#include "markdown_node.hpp"
 
 typedef hoedown_renderer markdown_analyzer;
 

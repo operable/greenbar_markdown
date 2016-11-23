@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstddef>
 #include "erl_nif.h"
-#include "markdown_info.hpp"
+#include "markdown_node.hpp"
 #include "gb_common.hpp"
 
 #define TYPE_TO_STRING(type) #type

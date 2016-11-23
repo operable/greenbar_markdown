@@ -1,5 +1,5 @@
 #include "erl_nif.h"
-#include "markdown_info.hpp"
+#include "markdown_node.hpp"
 #include "gb_common.hpp"
 
 namespace greenbar {

@@ -1,5 +1,5 @@
-#ifndef GREENBAR_MARKDOWN_INFO_H
-#define GREENBAR_MARKDOWN_INFO_H
+#ifndef GREENBAR_MARKDOWN_NODE_H
+#define GREENBAR_MARKDOWN_NODE_H
 
 #include "erl_nif.h"
 #include <memory>
