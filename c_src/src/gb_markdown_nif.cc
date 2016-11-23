@@ -23,7 +23,6 @@
 #include "buffer.h"
 
 #include <iostream>
-#include <vector>
 #include <string>
 #include "gb_common.hpp"
 #include "markdown_analyzer.hpp"
@@ -101,7 +100,7 @@ static void on_unload(ErlNifEnv* env, void* priv) {
   enif_free(priv);
 }
 
-static ERL_NIF_TERM convert_results(ErlNifEnv *env, std::vector<greenbar::MarkdownNode*>* collector) {
+static ERL_NIF_TERM convert_results(ErlNifEnv *env, greenbar::NodeStack *collector) {
   ERL_NIF_TERM head, tail;
   tail = enif_make_list(env, 0);
   if (collector->size() < 1) {

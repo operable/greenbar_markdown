@@ -48,6 +48,8 @@ namespace greenbar {
     virtual ERL_NIF_TERM to_erl_term(ErlNifEnv* env) = 0;
   };
 
+  typedef std::vector<MarkdownNode*> NodeStack;
+
   class MarkdownLeafInfo : public MarkdownNode {
   private:
     MarkdownInfoType type_;
@@ -75,7 +77,7 @@ namespace greenbar {
 
   class MarkdownParentInfo : public MarkdownNode {
   private:
-    std::vector<MarkdownNode*> children_;
+    NodeStack children_;
     MarkdownInfoType type_;
     MarkdownAlignment alignment_;
 
