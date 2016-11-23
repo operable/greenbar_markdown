@@ -38,9 +38,9 @@ namespace greenbar {
     MD_ALIGN_NONE
   };
 
-  class MarkdownInfo {
+  class MarkdownNode {
   public:
-    virtual ~MarkdownInfo() { };
+    virtual ~MarkdownNode() { };
     virtual MarkdownInfoType get_type() = 0;
     virtual bool is_leaf() { return false; };
     virtual MarkdownAlignment get_alignment() = 0;
@@ -48,7 +48,7 @@ namespace greenbar {
     virtual ERL_NIF_TERM to_erl_term(ErlNifEnv* env) = 0;
   };
 
-  class MarkdownLeafInfo : public MarkdownInfo {
+  class MarkdownLeafInfo : public MarkdownNode {
   private:
     MarkdownInfoType type_;
     std::string text_;
@@ -73,9 +73,9 @@ namespace greenbar {
     void set_level(int level);
   };
 
-  class MarkdownParentInfo : public MarkdownInfo {
+  class MarkdownParentInfo : public MarkdownNode {
   private:
-    std::vector<MarkdownInfo*> children_;
+    std::vector<MarkdownNode*> children_;
     MarkdownInfoType type_;
     MarkdownAlignment alignment_;
 
@@ -87,7 +87,7 @@ namespace greenbar {
   public:
     MarkdownParentInfo(MarkdownInfoType type);
     virtual ~MarkdownParentInfo();
-    void add_child(MarkdownInfo* child);
+    void add_child(MarkdownNode* child);
     ERL_NIF_TERM to_erl_term(ErlNifEnv* env);
     MarkdownInfoType get_type();
     MarkdownAlignment get_alignment();
@@ -102,8 +102,8 @@ namespace greenbar {
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const std::string& text);
   MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* text, const hoedown_buffer* url);
 
-  MarkdownLeafInfo* as_leaf(MarkdownInfo* info);
-  MarkdownParentInfo* as_parent(MarkdownInfo* info);
+  MarkdownLeafInfo* as_leaf(MarkdownNode* info);
+  MarkdownParentInfo* as_parent(MarkdownNode* info);
 
   ERL_NIF_TERM type_to_atom(MarkdownInfoType type, gb_priv_s* priv_data);
   ERL_NIF_TERM alignment_to_atom(MarkdownAlignment align, gb_priv_s* priv_data);

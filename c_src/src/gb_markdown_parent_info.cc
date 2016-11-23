@@ -15,7 +15,7 @@ namespace greenbar {
     }
   }
 
-  void MarkdownParentInfo::add_child(MarkdownInfo* child) {
+  void MarkdownParentInfo::add_child(MarkdownNode* child) {
     children_.push_back(child);
   }
 

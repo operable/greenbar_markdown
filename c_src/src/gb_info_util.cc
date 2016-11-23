@@ -42,14 +42,14 @@ namespace greenbar {
     return retval;
   }
 
-  MarkdownLeafInfo* as_leaf(MarkdownInfo* info) {
+  MarkdownLeafInfo* as_leaf(MarkdownNode* info) {
     if (info) {
       return dynamic_cast<MarkdownLeafInfo*>(info);
     }
     return nullptr;
   }
 
-  MarkdownParentInfo* as_parent(MarkdownInfo* info) {
+  MarkdownParentInfo* as_parent(MarkdownNode* info) {
     if (info) {
       return dynamic_cast<MarkdownParentInfo*>(info);
     }

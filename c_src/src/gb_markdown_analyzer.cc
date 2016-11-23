@@ -69,7 +69,7 @@ namespace greenbar {
     analyzer->table_row = gb_markdown_table_row;
     analyzer->table_cell = gb_markdown_table_cell;
     analyzer->normal_text = gb_markdown_normal_text;
-    analyzer->opaque = (void *) new std::vector<greenbar::MarkdownInfo*>();
+    analyzer->opaque = (void *) new std::vector<greenbar::MarkdownNode*>();
     return analyzer;
   }
 
@@ -79,7 +79,7 @@ namespace greenbar {
 
   void free_markdown_analyzer(markdown_analyzer* analyzer) {
     if (analyzer->opaque != nullptr) {
-      auto collector = (std::vector<greenbar::MarkdownInfo*>*) analyzer->opaque;
+      auto collector = (std::vector<greenbar::MarkdownNode*>*) analyzer->opaque;
       for (size_t i = 0; i < collector->size(); i++) {
         delete collector->at(i);
       }
@@ -88,14 +88,14 @@ namespace greenbar {
     free(analyzer);
   }
 
-  std::vector<greenbar::MarkdownInfo*>* get_collector(markdown_analyzer* analyzer) {
-    return (std::vector<greenbar::MarkdownInfo*>*) analyzer->opaque;
+  std::vector<greenbar::MarkdownNode*>* get_collector(markdown_analyzer* analyzer) {
+    return (std::vector<greenbar::MarkdownNode*>*) analyzer->opaque;
   }
 
 }
 
-static std::vector<greenbar::MarkdownInfo*>* get_collector(const hoedown_renderer_data *data) {
-  return (std::vector<greenbar::MarkdownInfo*>*) data->opaque;
+static std::vector<greenbar::MarkdownNode*>* get_collector(const hoedown_renderer_data *data) {
+  return (std::vector<greenbar::MarkdownNode*>*) data->opaque;
 }
 
 

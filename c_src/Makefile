@@ -16,6 +16,8 @@ ERTS_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s/erts
 ERL_INTERFACE_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s\", [code:lib_dir(erl_interface, include)]).")
 ERL_INTERFACE_LIB_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s\", [code:lib_dir(erl_interface, lib)]).")
 
+PROJECT_INCLUDES = -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR) -I deps/hoedown/src -I include
+
 C_SRC_OUTPUT ?= $(CURDIR)/../priv/$(PROJECT).so
 
 # System type and C compiler/flags.
@@ -36,11 +38,13 @@ else ifeq ($(UNAME_SYS), Linux)
 	CXXFLAGS = -O3 -Wall -pedantic -ansi
 endif
 
-CFLAGS += -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR) -I deps/hoedown/src -I include
-CXXFLAGS += -std=c++11 -fPIC -I $(ERTS_INCLUDE_DIR) -I $(ERL_INTERFACE_INCLUDE_DIR) -I deps/hoedown/src -I include
+CFLAGS += -fPIC
+CXXFLAGS += -std=c++11 -fPIC
 
 LDLIBS += -L $(ERL_INTERFACE_LIB_DIR) -lerl_interface -lei
 LDFLAGS += -shared
+
+.PHONY: clean really-clean
 
 # Verbosity.
 
@@ -55,8 +59,8 @@ link_verbose = $(link_verbose_$(V))
 
 OBJECTS = $(addsuffix .o, $(basename $(SOURCES)))
 
-COMPILE_C = $(c_verbose) $(CC) $(CFLAGS) $(CPPFLAGS) -c
-COMPILE_CPP = $(cpp_verbose) $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c
+COMPILE_C = $(c_verbose) $(CC) $(CFLAGS) $(CPPFLAGS) $(PROJECT_INCLUDES) -c
+COMPILE_CPP = $(cpp_verbose) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(PROJECT_INCLUDES) -c
 
 $(C_SRC_OUTPUT): deps/hoedown/libhoedown.a $(OBJECTS)
 	@mkdir -p $(BASEDIR)/priv/
@@ -75,9 +79,16 @@ src/gb_markdown_analyzer.cc: src/gb_markdown_leaf_info.cc src/gb_markdown_parent
 src/gb_info_util.cc: include/gb_common.hpp include/markdown_node.hpp
 
 clean:
-	@rm -f $(C_SRC_OUTPUT) $(OBJECTS)
+	rm -f $(C_SRC_OUTPUT) $(OBJECTS)
 
-deps/hoedown/libhoedown.a:
-	mkdir -p deps/lib
+really-clean: clean
+	make -C deps/hoedown clean
+
+deps/hoedown:
 	git clone git://github.com/hoedown/hoedown deps/hoedown
-	cd deps/hoedown && make -j2
+
+deps/hoedown/libhoedown.a: deps/hoedown
+	make -C deps/hoedown libhoedown.a -j2
+
+check-syntax:
+	$(cpp_verbose) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(PROJECT_INCLUDES) -S $(CHK_SOURCES)
