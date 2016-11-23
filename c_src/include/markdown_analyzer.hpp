@@ -15,7 +15,7 @@ namespace greenbar {
   void free_markdown_analyzer(markdown_analyzer* analyzer);
 
   // Get collector associated with analyzer instance
-  greenbar::NodeStack* get_collector(markdown_analyzer* analyzer);
+  greenbar::node::NodeStack* get_collector(markdown_analyzer* analyzer);
 
   // Prepare a hoedown document for processing with specified analyzer
   hoedown_document* new_hoedown_document(markdown_analyzer* analyzer);

@@ -100,7 +100,7 @@ static void on_unload(ErlNifEnv* env, void* priv) {
   enif_free(priv);
 }
 
-static ERL_NIF_TERM convert_results(ErlNifEnv *env, greenbar::NodeStack *collector) {
+static ERL_NIF_TERM convert_results(ErlNifEnv *env, greenbar::node::NodeStack *collector) {
   ERL_NIF_TERM head, tail;
   tail = enif_make_list(env, 0);
   if (collector->size() < 1) {
@@ -110,9 +110,9 @@ static ERL_NIF_TERM convert_results(ErlNifEnv *env, greenbar::NodeStack *collect
   for(size_t i = 0; i < collector->size(); i++) {
     auto info = collector->at(i);
     // Don't add double EOLs to end of template
-    if (i == last_index && info->get_type() == greenbar::MD_EOL) {
+    if (i == last_index && info->get_type() == greenbar::node::MD_EOL) {
       auto previous = collector->at(i - 1);
-      if (previous->get_type() == greenbar::MD_EOL) {
+      if (previous->get_type() == greenbar::node::MD_EOL) {
         continue;
       }
     }
