@@ -8,21 +8,10 @@ namespace greenbar {
     MarkdownLeafNode::MarkdownLeafNode(NodeType info_type) {
       type_ = info_type;
       text_ = "";
-      url_ = "";
-      level_ = -1;
-      alignment_ = MD_ALIGN_NONE;
     }
 
     NodeType MarkdownLeafNode::get_type() {
       return type_;
-    }
-
-    NodeAlignment MarkdownLeafNode::get_alignment() {
-      return alignment_;
-    }
-
-    void MarkdownLeafNode::set_alignment(NodeAlignment align) {
-      alignment_ = align;
     }
 
     void MarkdownLeafNode::set_type(NodeType type) {
@@ -31,14 +20,6 @@ namespace greenbar {
 
     void MarkdownLeafNode::set_text(std::string text) {
       text_ = text;
-    }
-
-    void MarkdownLeafNode::set_url(std::string url) {
-      url_ = url;
-    }
-
-    void MarkdownLeafNode::set_level(int level) {
-      level_ = level;
     }
 
     ERL_NIF_TERM MarkdownLeafNode::to_erl_term(ErlNifEnv* env) {
@@ -53,19 +34,25 @@ namespace greenbar {
         enif_make_map_put(env, retval, priv_data->gb_atom_text, text, &retval);
 
         if (this->type_ == MD_HEADER) {
-          ERL_NIF_TERM level = enif_make_int(env, this->level_);
+          auto level_attr = this->get_attribute(ATTR_LEVEL);
+          ERL_NIF_TERM level = enif_make_int(env, level_attr.n());
           enif_make_map_put(env, retval, priv_data->gb_atom_level, level, &retval);
         }
 
         if (this->type_ == MD_LINK) {
           ERL_NIF_TERM url;
-          auto contents = enif_make_new_binary(env, this->url_.size(), &url);
-          memcpy(contents, this->url_.c_str(), this->url_.size());
-          enif_make_map_put(env, retval, priv_data->gb_atom_url, url, &retval);
+          if (this->has_attribute(ATTR_URL)) {
+            auto value = this->get_attribute(ATTR_URL);
+            const std::string& text = value.s();
+            auto contents = enif_make_new_binary(env, text.size(), &url);
+            memcpy(contents, text.c_str(), text.size());
+            enif_make_map_put(env, retval, priv_data->gb_atom_url, url, &retval);
+          }
         }
       }
-      if (this->alignment_ != MD_ALIGN_NONE) {
-        enif_make_map_put(env, retval, priv_data->gb_atom_alignment, alignment_to_atom(this->alignment_, priv_data), &retval);
+      if (this->has_attribute(ATTR_ALIGNMENT)) {
+        auto alignment_attr = this->get_attribute(ATTR_ALIGNMENT);
+        enif_make_map_put(env, retval, priv_data->gb_atom_alignment, alignment_to_atom((NodeAlignment) alignment_attr.n(), priv_data), &retval);
       }
       return retval;
     }

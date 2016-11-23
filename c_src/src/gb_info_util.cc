@@ -21,7 +21,7 @@ namespace greenbar {
       if (buf != nullptr) {
         retval->set_text(std::string((char*) buf->data, buf->size));
       }
-      retval->set_level(info_level);
+      retval->put_attribute(ATTR_LEVEL, AttributeValue(info_level));
       return retval;
     }
 
@@ -34,10 +34,10 @@ namespace greenbar {
     MarkdownLeafNode* new_leaf(NodeType info_type, const hoedown_buffer* title, const hoedown_buffer* link) {
       auto retval = new MarkdownLeafNode(info_type);
       if (title != nullptr) {
-        retval->set_text(std::string((char*) title->data, title->size));
+        retval->put_attribute(ATTR_TITLE, AttributeValue(std::string((char*) title->data, title->size)));
       }
       if (link != nullptr) {
-        retval->set_url(std::string((char*) link->data, link->size));
+        retval->put_attribute(ATTR_URL, AttributeValue(std::string((char*) link->data, link->size)));
       }
       return retval;
     }

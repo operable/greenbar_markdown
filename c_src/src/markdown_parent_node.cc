@@ -7,7 +7,6 @@ namespace greenbar {
 
     MarkdownParentNode::MarkdownParentNode(NodeType info_type) {
       type_ = info_type;
-      alignment_ = MD_ALIGN_NONE;
     }
 
     MarkdownParentNode::~MarkdownParentNode() {
@@ -22,14 +21,6 @@ namespace greenbar {
 
     NodeType MarkdownParentNode::get_type() {
       return type_;
-    }
-
-    NodeAlignment MarkdownParentNode::get_alignment() {
-      return alignment_;
-    }
-
-    void MarkdownParentNode::set_alignment(NodeAlignment align) {
-      alignment_ = align;
     }
 
     void MarkdownParentNode::set_type(NodeType type) {
@@ -85,8 +76,9 @@ namespace greenbar {
       enif_make_map_put(env, retval, priv_data->gb_atom_name, type_name, &retval);
       ERL_NIF_TERM children = convert_children(env);
       enif_make_map_put(env, retval, priv_data->gb_atom_children, children, &retval);
-      if (this->alignment_ != MD_ALIGN_NONE) {
-        enif_make_map_put(env, retval, priv_data->gb_atom_alignment, alignment_to_atom(this->alignment_, priv_data), &retval);
+      if (this->has_attribute(ATTR_ALIGNMENT)) {
+        auto value = this->get_attribute(ATTR_ALIGNMENT);
+        enif_make_map_put(env, retval, priv_data->gb_atom_alignment, alignment_to_atom((NodeAlignment) value.n(), priv_data), &retval);
       }
       return retval;
     }

@@ -119,7 +119,8 @@ static bool set_previous(const hoedown_renderer_data *data, greenbar::node::Node
     auto last_info = greenbar::node::as_leaf(collector->back());
     if (last_info != nullptr && last_info->get_type() == previousType) {
       last_info->set_type(newType);
-      last_info->set_level(level);
+      auto level_attr = greenbar::node::AttributeValue(level);
+      last_info->put_attribute(greenbar::node::ATTR_LEVEL, level_attr);
       retval = true;
     }
   }
@@ -213,7 +214,8 @@ static int gb_markdown_link(hoedown_buffer *ob, const hoedown_buffer *content, c
     auto last_info = greenbar::node::as_leaf(collector->back());
     if (last_info != nullptr && last_info->get_type() == greenbar::node::MD_TEXT) {
       last_info->set_type(greenbar::node::MD_LINK);
-      last_info->set_url(std::string((char*)link->data, link->size));
+      auto link_attr = greenbar::node::AttributeValue(std::string((char*)link->data, link->size));
+      last_info->put_attribute(greenbar::node::ATTR_URL, link_attr);
     } else {
       collector->push_back(greenbar::node::new_leaf(greenbar::node::MD_LINK, title, link));
     }
@@ -367,14 +369,13 @@ static void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *con
     collector->pop_back();
     cell->add_child(child);
   }
-  if (flags & HOEDOWN_TABLE_ALIGN_LEFT) {
-    cell->set_alignment(greenbar::node::MD_ALIGN_LEFT);
-  }
+  int alignment = (int) greenbar::node::MD_ALIGN_LEFT;
   if (flags & HOEDOWN_TABLE_ALIGN_RIGHT) {
-    cell->set_alignment(greenbar::node::MD_ALIGN_RIGHT);
+    alignment = (int) greenbar::node::MD_ALIGN_RIGHT;
   }
   if (flags & HOEDOWN_TABLE_ALIGN_CENTER) {
-    cell->set_alignment(greenbar::node::MD_ALIGN_CENTER);
+    alignment = (int) greenbar::node::MD_ALIGN_CENTER;
   }
+  cell->put_attribute(greenbar::node::ATTR_ALIGNMENT, greenbar::node::AttributeValue(alignment));
   collector->push_back(cell);
 }

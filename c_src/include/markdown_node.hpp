@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <cstring>
+#include <map>
 #include <vector>
 #include "buffer.h"
 #include "gb_common.hpp"
@@ -39,20 +40,58 @@ namespace greenbar {
       MD_ALIGN_NONE
     };
 
-    enum NodeAttributes {
+    enum NodeAttribute {
       ATTR_ALIGNMENT,
+      ATTR_TITLE,
       ATTR_URL,
       ATTR_LEVEL
     };
 
+    class AttributeValue {
+    private:
+      bool empty_;
+      std::string s_;
+      int n_;
+    public:
+      AttributeValue() : empty_(true), s_(""), n_(0) {}
+      AttributeValue(std::string s) : empty_(false), s_(s), n_(0) {}
+      AttributeValue(int n) : empty_(false), s_(""), n_(n) {}
+
+      bool empty() { return empty_; }
+      const std::string& s() { return s_; }
+      int n() { return n_; }
+    };
+
+    const AttributeValue ATTR_NOT_FOUND = AttributeValue();
+
+    typedef std::map<NodeAttribute, AttributeValue> AttributeMap;
+
     class MarkdownNode {
+    protected:
+      AttributeMap attributes_;
     public:
       virtual ~MarkdownNode() { };
       virtual NodeType get_type() = 0;
       virtual bool is_leaf() { return false; };
-      virtual NodeAlignment get_alignment() = 0;
-      virtual void set_alignment(NodeAlignment align) = 0;
       virtual ERL_NIF_TERM to_erl_term(ErlNifEnv* env) = 0;
+
+      const AttributeValue& get_attribute(const NodeAttribute& attr) {
+        auto iter = attributes_.find(attr);
+        if (iter == attributes_.end()) {
+          return ATTR_NOT_FOUND;
+        }
+        else {
+          return iter->second;
+        }
+      }
+
+      void put_attribute(const NodeAttribute& attr, const AttributeValue value) {
+        attributes_[attr] = value;
+      }
+
+      bool has_attribute(const NodeAttribute& attr) {
+        return attributes_.find(attr) != attributes_.end();
+      }
     };
 
     typedef std::vector<MarkdownNode*> NodeStack;
@@ -61,9 +100,6 @@ namespace greenbar {
     private:
       NodeType type_;
       std::string text_;
-      std::string url_;
-      int level_;
-      NodeAlignment alignment_;
 
       // No copying
       MarkdownLeafNode(MarkdownLeafNode const &);
@@ -74,19 +110,14 @@ namespace greenbar {
       virtual ~MarkdownLeafNode() { };
       ERL_NIF_TERM to_erl_term(ErlNifEnv* env);
       NodeType get_type();
-      NodeAlignment get_alignment();
-      void set_alignment(NodeAlignment align);
       void set_type(NodeType type);
       void set_text(std::string text);
-      void set_url(std::string url);
-      void set_level(int level);
     };
 
     class MarkdownParentNode : public MarkdownNode {
     private:
       NodeStack children_;
       NodeType type_;
-      NodeAlignment alignment_;
 
       // No copying
       MarkdownParentNode(MarkdownParentNode const &);
@@ -99,8 +130,6 @@ namespace greenbar {
       void add_child(MarkdownNode* child);
       ERL_NIF_TERM to_erl_term(ErlNifEnv* env);
       NodeType get_type();
-      NodeAlignment get_alignment();
-      void set_alignment(NodeAlignment align);
       size_t last_child();
       void set_type(NodeType type);
       bool set_child_type(size_t index, NodeType old_type, NodeType new_type);
