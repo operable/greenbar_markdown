@@ -7,8 +7,8 @@ PROJECT ?= $(notdir $(BASEDIR))
 PROJECT := $(strip $(PROJECT))
 
 SOURCES := src/gb_info_util.cc \
-	   src/gb_markdown_leaf_info.cc \
-	   src/gb_markdown_parent_info.cc \
+	   src/markdown_leaf_node.cc \
+	   src/markdown_parent_node.cc \
 	   src/gb_markdown_analyzer.cc \
 	   src/gb_markdown_nif.cc
 
@@ -73,9 +73,9 @@ $(C_SRC_OUTPUT): deps/hoedown/libhoedown.a $(OBJECTS)
 
 src/gb_markdown_nif.cc: src/gb_markdown_analyzer.cc include/gb_common.hpp
 
-src/gb_markdown_leaf_info.cc: src/gb_info_util.cc
-src/gb_markdown_parent_info.cc: src/gb_info_util.cc
-src/gb_markdown_analyzer.cc: src/gb_markdown_leaf_info.cc src/gb_markdown_parent_info.cc include/markdown_analyzer.hpp
+src/markdown_leaf_node.cc: src/gb_info_util.cc
+src/markdown_parent_node.cc: src/gb_info_util.cc
+src/gb_markdown_analyzer.cc: src/markdown_leaf_node.cc src/markdown_parent_node.cc include/markdown_analyzer.hpp
 src/gb_info_util.cc: include/gb_common.hpp include/markdown_node.hpp
 
 clean:

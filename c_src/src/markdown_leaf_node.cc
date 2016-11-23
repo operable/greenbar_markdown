@@ -4,7 +4,7 @@
 
 namespace greenbar {
 
-  MarkdownLeafInfo::MarkdownLeafInfo(MarkdownInfoType info_type) {
+  MarkdownLeafNode::MarkdownLeafNode(MarkdownInfoType info_type) {
     type_ = info_type;
     text_ = "";
     url_ = "";
@@ -12,35 +12,35 @@ namespace greenbar {
     alignment_ = MD_ALIGN_NONE;
   }
 
-  MarkdownInfoType MarkdownLeafInfo::get_type() {
+  MarkdownInfoType MarkdownLeafNode::get_type() {
     return type_;
   }
 
-  MarkdownAlignment MarkdownLeafInfo::get_alignment() {
+  MarkdownAlignment MarkdownLeafNode::get_alignment() {
     return alignment_;
   }
 
-  void MarkdownLeafInfo::set_alignment(MarkdownAlignment align) {
+  void MarkdownLeafNode::set_alignment(MarkdownAlignment align) {
     alignment_ = align;
   }
 
-  void MarkdownLeafInfo::set_type(MarkdownInfoType type) {
+  void MarkdownLeafNode::set_type(MarkdownInfoType type) {
     type_ = type;
   }
 
-  void MarkdownLeafInfo::set_text(std::string text) {
+  void MarkdownLeafNode::set_text(std::string text) {
     text_ = text;
   }
 
-  void MarkdownLeafInfo::set_url(std::string url) {
+  void MarkdownLeafNode::set_url(std::string url) {
     url_ = url;
   }
 
-  void MarkdownLeafInfo::set_level(int level) {
+  void MarkdownLeafNode::set_level(int level) {
     level_ = level;
   }
 
-  ERL_NIF_TERM MarkdownLeafInfo::to_erl_term(ErlNifEnv* env) {
+  ERL_NIF_TERM MarkdownLeafNode::to_erl_term(ErlNifEnv* env) {
     gb_priv_s *priv_data = (gb_priv_s*) enif_priv_data(env);
     ERL_NIF_TERM type_name = type_to_atom(this->type_, priv_data);
     ERL_NIF_TERM retval = enif_make_new_map(env);

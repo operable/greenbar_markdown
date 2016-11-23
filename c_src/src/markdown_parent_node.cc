@@ -4,45 +4,45 @@
 
 namespace greenbar {
 
-  MarkdownParentInfo::MarkdownParentInfo(MarkdownInfoType info_type) {
+  MarkdownParentNode::MarkdownParentNode(MarkdownInfoType info_type) {
     type_ = info_type;
     alignment_ = MD_ALIGN_NONE;
   }
 
-  MarkdownParentInfo::~MarkdownParentInfo() {
+  MarkdownParentNode::~MarkdownParentNode() {
     for (size_t i = 0; i < children_.size(); i++) {
       delete children_.at(i);
     }
   }
 
-  void MarkdownParentInfo::add_child(MarkdownNode* child) {
+  void MarkdownParentNode::add_child(MarkdownNode* child) {
     children_.push_back(child);
   }
 
-  MarkdownInfoType MarkdownParentInfo::get_type() {
+  MarkdownInfoType MarkdownParentNode::get_type() {
     return type_;
   }
 
-  MarkdownAlignment MarkdownParentInfo::get_alignment() {
+  MarkdownAlignment MarkdownParentNode::get_alignment() {
     return alignment_;
   }
 
-  void MarkdownParentInfo::set_alignment(MarkdownAlignment align) {
+  void MarkdownParentNode::set_alignment(MarkdownAlignment align) {
     alignment_ = align;
   }
 
-  void MarkdownParentInfo::set_type(MarkdownInfoType type) {
+  void MarkdownParentNode::set_type(MarkdownInfoType type) {
     type_ = type;
   }
 
-  size_t MarkdownParentInfo::last_child() {
+  size_t MarkdownParentNode::last_child() {
     if (children_.empty()) {
       return -1;
     }
     return children_.size() - 1;
   }
 
-  bool MarkdownParentInfo::set_child_type(size_t index, MarkdownInfoType old_type, MarkdownInfoType new_type) {
+  bool MarkdownParentNode::set_child_type(size_t index, MarkdownInfoType old_type, MarkdownInfoType new_type) {
     bool retval = false;
     if (!children_.empty() && index < children_.size()) {
       auto child = children_.at(index);
@@ -63,7 +63,7 @@ namespace greenbar {
     return retval;
   }
 
-  ERL_NIF_TERM MarkdownParentInfo::convert_children(ErlNifEnv *env) {
+  ERL_NIF_TERM MarkdownParentNode::convert_children(ErlNifEnv *env) {
     ERL_NIF_TERM head, tail;
     tail = enif_make_list(env, 0);
     if (children_.empty()) {
@@ -77,7 +77,7 @@ namespace greenbar {
     return tail;
   }
 
-  ERL_NIF_TERM MarkdownParentInfo::to_erl_term(ErlNifEnv* env) {
+  ERL_NIF_TERM MarkdownParentNode::to_erl_term(ErlNifEnv* env) {
     gb_priv_s *priv_data = (gb_priv_s*) enif_priv_data(env);
     ERL_NIF_TERM type_name = type_to_atom(this->type_, priv_data);
     ERL_NIF_TERM retval = enif_make_new_map(env);

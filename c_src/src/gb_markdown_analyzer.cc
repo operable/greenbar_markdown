@@ -155,12 +155,12 @@ static void gb_markdown_header(hoedown_buffer *ob, const hoedown_buffer *content
 
 static void gb_markdown_paragraph(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
-  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
+  collector->push_back(new greenbar::MarkdownLeafNode(greenbar::MD_EOL));
   if (content == nullptr || content->size == 0 || (content->size == 1 && content->data[0] == '\n')) {
     return;
   }
   collector->push_back(greenbar::new_leaf(greenbar::MD_TEXT, content));
-  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
+  collector->push_back(new greenbar::MarkdownLeafNode(greenbar::MD_EOL));
 }
 
 static int gb_markdown_autolink(hoedown_buffer *ob, const hoedown_buffer *link, hoedown_autolink_type type, const hoedown_renderer_data *data) {
@@ -200,7 +200,7 @@ static int gb_markdown_double_emphasis(hoedown_buffer *ob, const hoedown_buffer 
 
 static int gb_markdown_linebreak(hoedown_buffer *ob, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
-  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
+  collector->push_back(new greenbar::MarkdownLeafNode(greenbar::MD_EOL));
   return 1;
 }
 
@@ -228,7 +228,7 @@ static void gb_markdown_normal_text(hoedown_buffer *ob, const hoedown_buffer *te
     break;
   case 1:
     if (memcmp(text->data, "\n", 1) == 0) {
-      collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
+      collector->push_back(new greenbar::MarkdownLeafNode(greenbar::MD_EOL));
       break;
     }
   default:
@@ -247,7 +247,7 @@ static void gb_markdown_list(hoedown_buffer *ob, const hoedown_buffer *content,
   if (flags & HOEDOWN_LIST_ORDERED) {
     list_type = greenbar::MD_ORDERED_LIST;
   }
-  auto item = new greenbar::MarkdownParentInfo(list_type);
+  auto item = new greenbar::MarkdownParentNode(list_type);
   auto child = collector->back();
   while (child->get_type() == greenbar::MD_LIST_ITEM) {
     collector->pop_back();
@@ -265,7 +265,7 @@ static void gb_markdown_listitem(hoedown_buffer *ob, const hoedown_buffer *conte
   if (collector->empty()) {
     return;
   }
-  auto item = new greenbar::MarkdownParentInfo(greenbar::MD_LIST_ITEM);
+  auto item = new greenbar::MarkdownParentNode(greenbar::MD_LIST_ITEM);
   auto child = collector->back();
   if (child->get_type() == greenbar::MD_EOL) {
     collector->pop_back();
@@ -292,7 +292,7 @@ static void gb_markdown_table(hoedown_buffer *ob, const hoedown_buffer *content,
     return;
   }
   bool has_header = false;
-  auto table = new greenbar::MarkdownParentInfo(greenbar::MD_TABLE);
+  auto table = new greenbar::MarkdownParentNode(greenbar::MD_TABLE);
   auto child = collector->back();
   while (child->get_type() == greenbar::MD_TABLE_HEADER || child->get_type() == greenbar::MD_TABLE_ROW) {
     collector->pop_back();
@@ -316,7 +316,7 @@ static void gb_markdown_table_header(hoedown_buffer *ob, const hoedown_buffer *c
   if (collector->empty()) {
     return;
   }
-  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_TABLE_HEADER));
+  collector->push_back(new greenbar::MarkdownLeafNode(greenbar::MD_TABLE_HEADER));
 }
 
 static void gb_markdown_table_row(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
@@ -324,7 +324,7 @@ static void gb_markdown_table_row(hoedown_buffer *ob, const hoedown_buffer *cont
   if (collector->empty()) {
     return;
   }
-  auto row = new greenbar::MarkdownParentInfo(greenbar::MD_TABLE_ROW);
+  auto row = new greenbar::MarkdownParentNode(greenbar::MD_TABLE_ROW);
   auto child = collector->back();
   while (child->get_type() == greenbar::MD_TABLE_CELL) {
     collector->pop_back();
@@ -342,7 +342,7 @@ static void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *con
   if (collector->empty()) {
     return;
   }
-  auto cell = new greenbar::MarkdownParentInfo(greenbar::MD_TABLE_CELL);
+  auto cell = new greenbar::MarkdownParentNode(greenbar::MD_TABLE_CELL);
   while (true) {
     if (collector->empty()) {
       break;

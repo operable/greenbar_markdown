@@ -50,7 +50,7 @@ namespace greenbar {
 
   typedef std::vector<MarkdownNode*> NodeStack;
 
-  class MarkdownLeafInfo : public MarkdownNode {
+  class MarkdownLeafNode : public MarkdownNode {
   private:
     MarkdownInfoType type_;
     std::string text_;
@@ -59,12 +59,12 @@ namespace greenbar {
     MarkdownAlignment alignment_;
 
     // No copying
-    MarkdownLeafInfo(MarkdownLeafInfo const &);
-    MarkdownLeafInfo &operator=(MarkdownLeafInfo const &);
+    MarkdownLeafNode(MarkdownLeafNode const &);
+    MarkdownLeafNode &operator=(MarkdownLeafNode const &);
 
   public:
-    MarkdownLeafInfo(MarkdownInfoType type);
-    virtual ~MarkdownLeafInfo() { };
+    MarkdownLeafNode(MarkdownInfoType type);
+    virtual ~MarkdownLeafNode() { };
     ERL_NIF_TERM to_erl_term(ErlNifEnv* env);
     MarkdownInfoType get_type();
     MarkdownAlignment get_alignment();
@@ -75,20 +75,20 @@ namespace greenbar {
     void set_level(int level);
   };
 
-  class MarkdownParentInfo : public MarkdownNode {
+  class MarkdownParentNode : public MarkdownNode {
   private:
     NodeStack children_;
     MarkdownInfoType type_;
     MarkdownAlignment alignment_;
 
     // No copying
-    MarkdownParentInfo(MarkdownParentInfo const &);
-    MarkdownParentInfo &operator=(MarkdownParentInfo const &);
+    MarkdownParentNode(MarkdownParentNode const &);
+    MarkdownParentNode &operator=(MarkdownParentNode const &);
     ERL_NIF_TERM convert_children(ErlNifEnv* env);
 
   public:
-    MarkdownParentInfo(MarkdownInfoType type);
-    virtual ~MarkdownParentInfo();
+    MarkdownParentNode(MarkdownInfoType type);
+    virtual ~MarkdownParentNode();
     void add_child(MarkdownNode* child);
     ERL_NIF_TERM to_erl_term(ErlNifEnv* env);
     MarkdownInfoType get_type();
@@ -99,13 +99,13 @@ namespace greenbar {
     bool set_child_type(size_t index, MarkdownInfoType old_type, MarkdownInfoType new_type);
   };
 
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buffer);
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buffer, int info_level);
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const std::string& text);
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* text, const hoedown_buffer* url);
+  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buffer);
+  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buffer, int info_level);
+  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const std::string& text);
+  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* text, const hoedown_buffer* url);
 
-  MarkdownLeafInfo* as_leaf(MarkdownNode* info);
-  MarkdownParentInfo* as_parent(MarkdownNode* info);
+  MarkdownLeafNode* as_leaf(MarkdownNode* info);
+  MarkdownParentNode* as_parent(MarkdownNode* info);
 
   ERL_NIF_TERM type_to_atom(MarkdownInfoType type, gb_priv_s* priv_data);
   ERL_NIF_TERM alignment_to_atom(MarkdownAlignment align, gb_priv_s* priv_data);

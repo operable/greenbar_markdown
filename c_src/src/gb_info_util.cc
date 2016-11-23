@@ -8,16 +8,16 @@
 
 namespace greenbar {
 
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf) {
-    auto retval = new MarkdownLeafInfo(info_type);
+  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf) {
+    auto retval = new MarkdownLeafNode(info_type);
     if (buf != nullptr) {
       retval->set_text(std::string((char*) buf->data, buf->size));
     }
     return retval;
   }
 
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf, int info_level) {
-    auto retval = new MarkdownLeafInfo(info_type);
+  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* buf, int info_level) {
+    auto retval = new MarkdownLeafNode(info_type);
     if (buf != nullptr) {
       retval->set_text(std::string((char*) buf->data, buf->size));
     }
@@ -25,14 +25,14 @@ namespace greenbar {
     return retval;
   }
 
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const std::string& text) {
-    auto retval = new MarkdownLeafInfo(info_type);
+  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const std::string& text) {
+    auto retval = new MarkdownLeafNode(info_type);
     retval->set_text(text);
     return retval;
   }
 
-  MarkdownLeafInfo* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* title, const hoedown_buffer* link) {
-    auto retval = new MarkdownLeafInfo(info_type);
+  MarkdownLeafNode* new_leaf(MarkdownInfoType info_type, const hoedown_buffer* title, const hoedown_buffer* link) {
+    auto retval = new MarkdownLeafNode(info_type);
     if (title != nullptr) {
       retval->set_text(std::string((char*) title->data, title->size));
     }
@@ -42,16 +42,16 @@ namespace greenbar {
     return retval;
   }
 
-  MarkdownLeafInfo* as_leaf(MarkdownNode* info) {
+  MarkdownLeafNode* as_leaf(MarkdownNode* info) {
     if (info) {
-      return dynamic_cast<MarkdownLeafInfo*>(info);
+      return dynamic_cast<MarkdownLeafNode*>(info);
     }
     return nullptr;
   }
 
-  MarkdownParentInfo* as_parent(MarkdownNode* info) {
+  MarkdownParentNode* as_parent(MarkdownNode* info) {
     if (info) {
-      return dynamic_cast<MarkdownParentInfo*>(info);
+      return dynamic_cast<MarkdownParentNode*>(info);
     }
     return nullptr;
   }
