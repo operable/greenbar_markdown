@@ -207,7 +207,7 @@ static int gb_markdown_emphasis(hoedown_buffer *ob, const hoedown_buffer *conten
 
 static int gb_markdown_double_emphasis(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
-  if (content == nullptr | content->size == 0) {
+  if (content == nullptr || content->size == 0) {
     TextNode* tn = dynamic_cast<TextNode*>(collector->back());
     if (tn) {
       BoldNode* bn = tn->to_bold();
@@ -236,7 +236,7 @@ static int gb_markdown_link(hoedown_buffer *ob, const hoedown_buffer *content, c
     TextNode* tn = dynamic_cast<TextNode*>(last_node);
     if (tn) {
       LinkNode* ln = tn->to_link();
-      ln->put_attribute(ATTR_URL, AttributeValue(std::string((char*)url->data, url->size)));
+      ln->put_attribute(ATTR_URL, AttributeValue(hoedown_buffer_to_string(url)));
       collector->pop_back();
       collector->push_back(ln);
       delete tn;
