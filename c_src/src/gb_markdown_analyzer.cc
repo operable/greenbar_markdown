@@ -386,20 +386,19 @@ static void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *con
     return;
   }
   TableCellNode* cell = new TableCellNode();
-  while (!collector->empty()) {
-    bool stop_early = false;
+  bool table_done = false;
+  while (!collector->empty() && !table_done) {
     auto child = collector->back();
     switch(child->get_type()) {
     case MD_TABLE_CELL:
     case MD_TABLE_ROW:
     case MD_TABLE_HEADER:
     case MD_TABLE:
+      table_done = true;
+      break;
     default:
       collector->pop_back();
       cell->add_child(child);
-    }
-    if (stop_early) {
-      break;
     }
   }
   NodeAlignment alignment = ALIGN_NONE;
