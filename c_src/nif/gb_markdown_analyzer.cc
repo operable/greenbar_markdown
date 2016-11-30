@@ -214,7 +214,9 @@ static int gb_markdown_link(hoedown_buffer *ob, const hoedown_buffer *content, c
     auto last_info = greenbar::as_leaf(collector->back());
     if (last_info != nullptr && last_info->get_type() == greenbar::MD_TEXT) {
       last_info->set_type(greenbar::MD_LINK);
-      last_info->set_url(std::string((char*)link->data, link->size));
+      if (link != nullptr) {
+        last_info->set_url(std::string((char*)link->data, link->size));
+      }
     } else {
       collector->push_back(greenbar::new_leaf(greenbar::MD_LINK, title, link));
     }
