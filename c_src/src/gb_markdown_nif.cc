@@ -17,13 +17,13 @@
 // specific language governing permissions and limitations
 // under the License.
 //
-// -------------------------------------------------------------------
+// ------------------------------------------------------------------
+#include <assert.h>
+#include <iostream>
+#include <string>
 
 #include "erl_nif.h"
 #include "buffer.h"
-
-#include <iostream>
-#include <string>
 #include "gb_common.hpp"
 #include "markdown_analyzer.hpp"
 
@@ -66,6 +66,7 @@ static int on_load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info) {
   priv_data->gb_atom_children = make_atom(env, "children");
   priv_data->gb_atom_unknown = make_atom(env, "unknown");
   priv_data->gb_atom_name = make_atom(env, "name");
+  priv_data->gb_atom_paragraph = make_atom(env, "paragraph");
   priv_data->gb_atom_text = make_atom(env, "text");
   priv_data->gb_atom_newline = make_atom(env, "newline");
   priv_data->gb_atom_fixed_width = make_atom(env, "fixed_width");
@@ -100,19 +101,21 @@ static void on_unload(ErlNifEnv* env, void* priv) {
   enif_free(priv);
 }
 
-static ERL_NIF_TERM convert_results(ErlNifEnv *env, greenbar::node::NodeStack *collector) {
+static ERL_NIF_TERM convert_results(ErlNifEnv *env, greenbar::node2::NodeVector *collector) {
   ERL_NIF_TERM head, tail;
   tail = enif_make_list(env, 0);
   if (collector->size() < 1) {
     return tail;
   }
+//  assert(collector->size() == 1);
   size_t last_index = collector->size() - 1;
   for(size_t i = 0; i < collector->size(); i++) {
     auto info = collector->at(i);
+
     // Don't add double EOLs to end of template
-    if (i == last_index && info->get_type() == greenbar::node::MD_EOL) {
+    if (i == last_index && info->get_type() == greenbar::node2::MD_EOL) {
       auto previous = collector->at(i - 1);
-      if (previous->get_type() == greenbar::node::MD_EOL) {
+      if (previous->get_type() == greenbar::node2::MD_EOL) {
         continue;
       }
     }

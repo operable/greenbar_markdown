@@ -2,7 +2,7 @@
 #define GREENBAR_MARKDOWN_ANALYZER_H
 
 #include "document.h"
-#include "markdown_node.hpp"
+#include "md_node.hpp"
 
 typedef hoedown_renderer markdown_analyzer;
 
@@ -15,7 +15,7 @@ namespace greenbar {
   void free_markdown_analyzer(markdown_analyzer* analyzer);
 
   // Get collector associated with analyzer instance
-  greenbar::node::NodeStack* get_collector(markdown_analyzer* analyzer);
+  greenbar::node2::NodeVector* get_collector(markdown_analyzer* analyzer);
 
   // Prepare a hoedown document for processing with specified analyzer
   hoedown_document* new_hoedown_document(markdown_analyzer* analyzer);

@@ -6,11 +6,11 @@ BASEDIR := $(abspath $(CURDIR)/..)
 PROJECT ?= $(notdir $(BASEDIR))
 PROJECT := $(strip $(PROJECT))
 
-SOURCES := src/gb_info_util.cc \
-	   src/markdown_leaf_node.cc \
-	   src/markdown_parent_node.cc \
-	   src/gb_markdown_analyzer.cc \
-	   src/gb_markdown_nif.cc
+SOURCES = src/node_util.cc \
+		  src/md_node_base.cc \
+		  src/md_node.cc \
+		  src/gb_markdown_analyzer.cc \
+		  src/gb_markdown_nif.cc
 
 ERTS_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s/erts-~s/include/\", [code:root_dir(), erlang:system_info(version)]).")
 ERL_INTERFACE_INCLUDE_DIR ?= $(shell erl -noshell -s init stop -eval "io:format(\"~s\", [code:lib_dir(erl_interface, include)]).")
@@ -25,8 +25,8 @@ C_SRC_OUTPUT ?= $(CURDIR)/../priv/$(PROJECT).so
 UNAME_SYS := $(shell uname -s)
 ifeq ($(UNAME_SYS), Darwin)
 	CC ?= cc
-	CFLAGS = -O3 -std=c99 -arch x86_64 -Wall -Wmissing-prototypes
-	CXXFLAGS = -O3 -arch x86_64 -Wall -pedantic -ansi
+	CFLAGS = -O3 -g -std=c99 -arch x86_64 -Wall -Wmissing-prototypes
+	CXXFLAGS = -O3 -g -arch x86_64 -Wall -pedantic -ansi
 	LDFLAGS = -arch x86_64 -flat_namespace -undefined suppress
 else ifeq ($(UNAME_SYS), FreeBSD)
 	CC ?= cc
@@ -66,17 +66,16 @@ $(C_SRC_OUTPUT): deps/hoedown/libhoedown.a $(OBJECTS)
 	@mkdir -p $(BASEDIR)/priv/
 	$(link_verbose) $(CXX) $(OBJECTS) $(LDFLAGS) $(LDLIBS) -o $(C_SRC_OUTPUT) deps/hoedown/libhoedown.a
 
-%.o: %.cc include/gb_common.hpp
+%.o: %.cc include/gb_common.hpp Makefile
 	$(COMPILE_CPP) $(OUTPUT_OPTION) $<
 
 # Source file dependencies
 
-src/gb_markdown_nif.cc: src/gb_markdown_analyzer.cc include/gb_common.hpp
-
-src/markdown_leaf_node.cc: src/gb_info_util.cc
-src/markdown_parent_node.cc: src/gb_info_util.cc
-src/gb_markdown_analyzer.cc: src/markdown_leaf_node.cc src/markdown_parent_node.cc include/markdown_analyzer.hpp
-src/gb_info_util.cc: include/gb_common.hpp include/markdown_node.hpp
+src/gb_markdown_nif.cc: src/gb_markdown_analyzer.cc include/gb_common.hpp include/md_node.hpp
+src/node_util.cc: include/md_node_base.hpp src/md_node_base.cc
+src/md_node_base.cc: include/md_node_base.hpp
+src/md_node.cc: include/md_node.hpp include/md_node_base.hpp src/md_node_base.cc
+src/gb_markdown_analyzer.cc: src/md_node_base.cc src/md_node.cc include/markdown_analyzer.hpp
 
 clean:
 	rm -f $(C_SRC_OUTPUT) $(OBJECTS)
