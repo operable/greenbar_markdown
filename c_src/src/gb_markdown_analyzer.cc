@@ -273,7 +273,12 @@ static void gb_markdown_normal_text(hoedown_buffer *ob, const hoedown_buffer *te
     }
     break;
   default:
-    collector->push_back(new TextNode(hoedown_buffer_to_string(text)));
+    auto tn = new TextNode(hoedown_buffer_to_string(text));
+    auto last_char_idx = text->size - 1;
+    if (text->data[last_char_idx] == '\n') {
+      tn->terminates_line(true);
+    }
+    collector->push_back(tn);
     break;
   }
 }
@@ -305,12 +310,28 @@ static void gb_markdown_list(hoedown_buffer *ob, const hoedown_buffer *content,
 static void gb_markdown_listitem(hoedown_buffer *ob, const hoedown_buffer *content, hoedown_list_flags flags, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
   auto item = new ListItemNode();
-  while(!collector->empty()) {
-    auto child = collector->back();
+  if (!collector->empty()) {
+    auto first_child = collector->back();
+    auto first_child_type = first_child->get_type();
+    if (first_child->get_type() == MD_LIST_ITEM) {
+      return;
+    }
     collector->pop_back();
-    item->add_child(child);
-    if (child->line_terminator()) {
-      break;
+    item->add_child(first_child);
+    while (!collector->empty()) {
+      auto child = collector->back();
+      if (child->get_type() == MD_LIST_ITEM) {
+        break;
+      }
+      if (child->line_terminator()) {
+        if (is_markdown_list(first_child_type) || first_child_type == MD_FIXED_WIDTH_BLOCK) {
+          collector->pop_back();
+          item->add_child(child);
+        }
+        break;
+      }
+      collector->pop_back();
+      item->add_child(child);
     }
   }
   if (item->empty()) {

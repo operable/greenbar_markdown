@@ -7,7 +7,9 @@ namespace greenbar {
   namespace node2 {
     class EOLNode : public MarkdownNode {
     public:
-      EOLNode() : MarkdownNode(MD_EOL) { }
+      EOLNode() : MarkdownNode(MD_EOL) {
+        terminates_line_ = true;
+      }
     };
 
     class BoldNode : public MarkdownNode {
@@ -27,7 +29,9 @@ namespace greenbar {
 
     class FixedWidthBlockNode : public MarkdownNode {
     public:
-      FixedWidthBlockNode(const std::string& text): MarkdownNode(MD_FIXED_WIDTH_BLOCK, text) { }
+      FixedWidthBlockNode(const std::string& text): MarkdownNode(MD_FIXED_WIDTH_BLOCK, text) {
+        terminates_line_ = true;
+      }
     };
 
     class TableHeaderNode : public MarkdownNode {
