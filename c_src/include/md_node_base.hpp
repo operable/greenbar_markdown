@@ -104,6 +104,7 @@ namespace greenbar {
 
       NodeType get_type() { return type_; }
       const std::string& get_text() { return text_; }
+      void set_text(std::string text) { text_ = text; }
 
       virtual std::string to_string();
 

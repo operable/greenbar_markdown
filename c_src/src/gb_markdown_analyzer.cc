@@ -103,6 +103,13 @@ static std::string hoedown_buffer_to_string(const hoedown_buffer* buf) {
   return std::string((char*) buf->data, buf->size);
 }
 
+static std::string hoedown_buffer_to_string(const hoedown_buffer* buf, unsigned int begin, unsigned int end) {
+  if (buf == nullptr) {
+    return std::string("");
+  }
+  return std::string((char*) &buf->data[begin], end);
+}
+
 static NodeVector* get_collector(const hoedown_renderer_data *data) {
   return (NodeVector*) data->opaque;
 }
@@ -145,6 +152,14 @@ static void gb_markdown_header(hoedown_buffer *ob, const hoedown_buffer *content
   }
 }
 
+static bool is_valid_paragraph_child(NodeType type) {
+  if (type == MD_PARAGRAPH || type == MD_TABLE || type == MD_TABLE_ROW || type == MD_TABLE_CELL ||
+      type == MD_TABLE_HEADER || type == MD_ORDERED_LIST || type == MD_UNORDERED_LIST || type == MD_LIST_ITEM) {
+    return false;
+  }
+  return true;
+}
+
 static void gb_markdown_paragraph(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
   if (collector->empty()) {
@@ -154,11 +169,15 @@ static void gb_markdown_paragraph(hoedown_buffer *ob, const hoedown_buffer *cont
   while (!collector->empty()) {
     auto last_node = collector->back();
     NodeType type = last_node->get_type();
-    if (type == MD_PARAGRAPH || type == MD_TABLE || type == MD_TABLE_ROW || type == MD_TABLE_CELL ||
-        type == MD_TABLE_HEADER || type == MD_ORDERED_LIST || type == MD_UNORDERED_LIST || type == MD_LIST_ITEM) {
+    if (!is_valid_paragraph_child(type)) {
       break;
     }
     collector->pop_back();
+    // If text of previous node terminates a line AND ends with two spaces
+    // then strip the two spaces and insert a newline in the paragraph.
+    if (last_node->line_terminator()) {
+      pn->add_child(new EOLNode());
+    }
     pn->add_child(last_node);
   }
   if (pn->empty()) {
@@ -258,29 +277,37 @@ static void gb_markdown_normal_text(hoedown_buffer *ob, const hoedown_buffer *te
   if (text == nullptr) {
     return;
   }
+  TextNode* tn = nullptr;
   auto collector = get_collector(data);
   switch(text->size) {
   case 0:
     break;
-  case 1:
+  default:
     if (text->data[0] == '\n') {
       if (!collector->empty()) {
         auto last_node = collector->back();
         last_node->terminates_line(true);
+        if (text->size == 1) {
+          break;
+        }
+        tn = new TextNode(hoedown_buffer_to_string(text, 1, text->size - 1));
+      } else {
+        tn = new TextNode(hoedown_buffer_to_string(text));
       }
     } else {
-      collector->push_back(new TextNode(hoedown_buffer_to_string(text)));
+      auto last_char_idx = text->size - 1;
+      if (text->data[last_char_idx] == '\n') {
+        tn = new TextNode(hoedown_buffer_to_string(text, 0, last_char_idx - 1));
+        tn->terminates_line(true);
+      } else {
+        tn = new TextNode(hoedown_buffer_to_string(text));
+      }
     }
-    break;
-  default:
-    auto tn = new TextNode(hoedown_buffer_to_string(text));
-    auto last_char_idx = text->size - 1;
-    if (text->data[last_char_idx] == '\n') {
-      tn->terminates_line(true);
-    }
-    collector->push_back(tn);
-    break;
   }
+  if (tn == nullptr) {
+    return;
+  }
+  collector->push_back(tn);
 }
 
 static void gb_markdown_list(hoedown_buffer *ob, const hoedown_buffer *content,
