@@ -438,6 +438,7 @@ static void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *con
   while (!collector->empty() && !table_done) {
     auto child = collector->back();
     switch(child->get_type()) {
+    case MD_PARAGRAPH:
     case MD_TABLE_CELL:
     case MD_TABLE_ROW:
     case MD_TABLE_HEADER:
