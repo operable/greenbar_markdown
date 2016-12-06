@@ -116,7 +116,7 @@ namespace greenbar {
       void put_attribute(const NodeAttribute& attr, const AttributeValue value);
       bool has_attribute(const NodeAttribute& attr);
 
-      bool line_terminator();
+      virtual bool line_terminator();
       bool terminates_line(bool flag);
 
       virtual ERL_NIF_TERM to_erl_term(ErlNifEnv* env);
@@ -139,9 +139,11 @@ namespace greenbar {
       MarkdownNodeContainer(NodeType type) : MarkdownNode(type) { }
       virtual ~MarkdownNodeContainer();
       virtual std::string to_string();
+      const NodeVector& get_children() { return children_; }
       void add_child(MarkdownNode* child);
       void drop_last(NodeType type);
       bool empty();
+      bool line_terminator();
     };
   }
 }

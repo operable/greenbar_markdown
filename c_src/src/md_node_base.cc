@@ -118,6 +118,24 @@ namespace greenbar {
       return children_.empty();
     }
 
+    bool MarkdownNodeContainer::line_terminator() {
+      if (children_.empty()) {
+        return false;
+      }
+      MarkdownNode* last_child = nullptr;
+      MarkdownNodeContainer *ctmp = nullptr;
+      last_child = children_.back();
+      ctmp = dynamic_cast<MarkdownNodeContainer*>(last_child);
+      while (ctmp != nullptr) {
+        if (ctmp->empty()) {
+          break;
+        }
+        last_child = ctmp->children_.back();
+        ctmp = dynamic_cast<MarkdownNodeContainer*>(last_child);
+      }
+      return last_child->line_terminator();
+    }
+
     void MarkdownNodeContainer::drop_last(NodeType type) {
       if (empty()) {
         return;
