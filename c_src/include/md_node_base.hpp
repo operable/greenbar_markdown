@@ -100,7 +100,11 @@ namespace greenbar {
     public:
       MarkdownNode(NodeType type);
       MarkdownNode(NodeType type, const std::string& text);
-      virtual ~MarkdownNode() { }
+      virtual ~MarkdownNode() {
+        if (!attributes_.empty()) {
+          attributes_.clear();
+        }
+      }
 
       NodeType get_type() { return type_; }
       const std::string& get_text() { return text_; }
