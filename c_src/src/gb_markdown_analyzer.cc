@@ -173,8 +173,6 @@ static void gb_markdown_paragraph(hoedown_buffer *ob, const hoedown_buffer *cont
       break;
     }
     collector->pop_back();
-    // If text of previous node terminates a line AND ends with two spaces
-    // then strip the two spaces and insert a newline in the paragraph.
     if (last_node->line_terminator()) {
       pn->add_child(new EOLNode());
     }
@@ -340,14 +338,16 @@ static void gb_markdown_listitem(hoedown_buffer *ob, const hoedown_buffer *conte
   if (!collector->empty()) {
     auto first_child = collector->back();
     auto first_child_type = first_child->get_type();
-    if (first_child->get_type() == MD_LIST_ITEM) {
+    if (first_child_type == MD_LIST_ITEM) {
       return;
     }
     collector->pop_back();
     item->add_child(first_child);
     while (!collector->empty()) {
       auto child = collector->back();
-      if (child->get_type() == MD_LIST_ITEM) {
+      auto child_type = child->get_type();
+      if (child_type == MD_LIST_ITEM ||
+          ((first_child_type == MD_PARAGRAPH || first_child_type == MD_TEXT) && child_type == MD_PARAGRAPH)) {
         break;
       }
       if (child->line_terminator()) {
