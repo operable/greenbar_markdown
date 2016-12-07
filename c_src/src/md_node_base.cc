@@ -99,7 +99,7 @@ namespace greenbar {
 
     std::string MarkdownNodeContainer::to_string() {
       auto text = MarkdownNode::to_string() + " \nchildren: [";
-      for (int i = 0; i < children_.size(); i++) {
+      for (size_t i = 0; i < children_.size(); i++) {
         auto child = children_.at(i);
         if (i > 0) {
           text = text + ", ";
