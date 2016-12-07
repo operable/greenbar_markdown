@@ -63,7 +63,7 @@ escript_path() ->
         "mix" ->
           %% Running under mix
           undefined;
-        false ->
+        _ ->
           filename:dirname(filename:absname(Path))
       end
   end.

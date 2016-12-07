@@ -8,6 +8,7 @@ typedef struct {
   ERL_NIF_TERM gb_atom_children;
   ERL_NIF_TERM gb_atom_unknown;
   ERL_NIF_TERM gb_atom_name;
+  ERL_NIF_TERM gb_atom_paragraph;
   ERL_NIF_TERM gb_atom_text;
   ERL_NIF_TERM gb_atom_newline;
   ERL_NIF_TERM gb_atom_fixed_width;

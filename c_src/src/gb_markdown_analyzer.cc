@@ -1,14 +1,13 @@
-#include "erl_nif.h"
-#include "document.h"
-#include "buffer.h"
-
 #include <string>
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
-#include <vector>
 
-#include "markdown_info.hpp"
+#include "erl_nif.h"
+#include "document.h"
+#include "buffer.h"
+#include "md_node.hpp"
+#include "debug.hpp"
 
 typedef hoedown_renderer markdown_analyzer;
 
@@ -29,6 +28,7 @@ static int gb_markdown_double_emphasis(hoedown_buffer *ob, const hoedown_buffer 
 static int gb_markdown_linebreak(hoedown_buffer *ob, const hoedown_renderer_data *data);
 static int gb_markdown_link(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_buffer *link, const hoedown_buffer *title,
                      const hoedown_renderer_data *data);
+static int gb_markdown_linebreak(hoedown_buffer *ob, const hoedown_renderer_data *data);
 static void gb_markdown_normal_text(hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_renderer_data *data);
 
 #define GB_HOEDOWN_EXTENSIONS (hoedown_extensions) (HOEDOWN_EXT_DISABLE_INDENTED_CODE | HOEDOWN_EXT_SPACE_HEADERS | \
@@ -36,7 +36,7 @@ static void gb_markdown_normal_text(hoedown_buffer *ob, const hoedown_buffer *te
                                                     HOEDOWN_EXT_TABLES | HOEDOWN_EXT_FENCED_CODE)
 #define GB_MAX_NESTING 16
 
-#define DBG_HERE std::cout << __FILE__ << ":" << __LINE__ << "\n"
+using namespace greenbar::node2;
 
 namespace greenbar {
 
@@ -61,7 +61,6 @@ namespace greenbar {
     analyzer->triple_emphasis = gb_markdown_double_emphasis;
     analyzer->autolink = gb_markdown_autolink;
     analyzer->link = gb_markdown_link;
-    analyzer->linebreak = gb_markdown_linebreak;
     analyzer->list = gb_markdown_list;
     analyzer->listitem = gb_markdown_listitem;
     analyzer->table = gb_markdown_table;
@@ -69,7 +68,8 @@ namespace greenbar {
     analyzer->table_row = gb_markdown_table_row;
     analyzer->table_cell = gb_markdown_table_cell;
     analyzer->normal_text = gb_markdown_normal_text;
-    analyzer->opaque = (void *) new std::vector<greenbar::MarkdownInfo*>();
+    analyzer->linebreak = gb_markdown_linebreak;
+    analyzer->opaque = (void *) new NodeVector();
     return analyzer;
   }
 
@@ -79,52 +79,39 @@ namespace greenbar {
 
   void free_markdown_analyzer(markdown_analyzer* analyzer) {
     if (analyzer->opaque != nullptr) {
-      auto collector = (std::vector<greenbar::MarkdownInfo*>*) analyzer->opaque;
-      for (size_t i = 0; i < collector->size(); i++) {
-        delete collector->at(i);
+      auto collector = (NodeVector*) analyzer->opaque;
+      while (!collector->empty()) {
+        auto node = collector->back();
+        collector->pop_back();
+        delete node;
       }
       delete collector;
     }
     free(analyzer);
   }
 
-  std::vector<greenbar::MarkdownInfo*>* get_collector(markdown_analyzer* analyzer) {
-    return (std::vector<greenbar::MarkdownInfo*>*) analyzer->opaque;
+  NodeVector* get_collector(markdown_analyzer* analyzer) {
+    return (NodeVector*) analyzer->opaque;
   }
 
 }
 
-static std::vector<greenbar::MarkdownInfo*>* get_collector(const hoedown_renderer_data *data) {
-  return (std::vector<greenbar::MarkdownInfo*>*) data->opaque;
+static std::string hoedown_buffer_to_string(const hoedown_buffer* buf) {
+  if (buf == nullptr) {
+    return std::string("");
+  }
+  return std::string((char*) buf->data, buf->size);
 }
 
-
-static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownInfoType previousType, greenbar::MarkdownInfoType newType) {
-  bool retval = false;
-  auto collector = get_collector(data);
-  if (!collector->empty()) {
-    auto last_info = greenbar::as_leaf(collector->back());
-    if (last_info != nullptr && last_info->get_type() == previousType) {
-      last_info->set_type(newType);
-      retval = true;
-    }
+static std::string hoedown_buffer_to_string(const hoedown_buffer* buf, unsigned int begin, unsigned int end) {
+  if (buf == nullptr) {
+    return std::string("");
   }
-  return retval;
+  return std::string((char*) &buf->data[begin], end);
 }
 
-static bool set_previous(const hoedown_renderer_data *data, greenbar::MarkdownInfoType previousType, greenbar::MarkdownInfoType newType,
-                         int level) {
-  bool retval = false;
-  auto collector = get_collector(data);
-  if (!collector->empty()) {
-    auto last_info = greenbar::as_leaf(collector->back());
-    if (last_info != nullptr && last_info->get_type() == previousType) {
-      last_info->set_type(newType);
-      last_info->set_level(level);
-      retval = true;
-    }
-  }
-  return retval;
+static NodeVector* get_collector(const hoedown_renderer_data *data) {
+  return (NodeVector*) data->opaque;
 }
 
 static void gb_markdown_blockcode(hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_buffer *lang,
@@ -133,40 +120,79 @@ static void gb_markdown_blockcode(hoedown_buffer *ob, const hoedown_buffer *text
     return;
   }
   auto collector = get_collector(data);
+  std::string block_text = "";
   if (text->size > 1) {
     uint8_t last_char = text->data[text->size - 1];
     if (last_char == '\n') {
-      std::string leaf_text = std::string((char*) text->data, text->size - 1);
-      collector->push_back(greenbar::new_leaf(greenbar::MD_FIXED_WIDTH_BLOCK, leaf_text));
-      return;
+      block_text = std::string((char*) text->data, text->size - 1);
+    } else {
+      block_text = hoedown_buffer_to_string(text);
     }
+    collector->push_back(new FixedWidthBlockNode(block_text));
   }
-  collector->push_back(greenbar::new_leaf(greenbar::MD_FIXED_WIDTH_BLOCK, text));
 }
 
 static void gb_markdown_header(hoedown_buffer *ob, const hoedown_buffer *content, int level,
                                const hoedown_renderer_data *data) {
-  if (content->size == 0) {
-    set_previous(data, greenbar::MD_TEXT, greenbar::MD_HEADER, level);
-  } else {
-    auto collector = get_collector(data);
-    collector->push_back(greenbar::new_leaf(greenbar::MD_HEADER, content, level));
+  auto collector = get_collector(data);
+  if (content->size == 0 && collector->empty() == false) {
+    TextNode* tn = dynamic_cast<TextNode*>(collector->back());
+    if (tn) {
+      HeaderNode* hn = tn->to_header(level);
+      collector->pop_back();
+      collector->push_back(hn);
+      delete tn;
+    }
   }
+  else {
+    if (content->size > 0) {
+      HeaderNode* hn = new HeaderNode(hoedown_buffer_to_string(content), level);
+      collector->push_back(hn);
+    }
+  }
+}
+
+static bool is_valid_paragraph_child(NodeType type) {
+  if (type == MD_PARAGRAPH || type == MD_TABLE || type == MD_TABLE_ROW || type == MD_TABLE_CELL ||
+      type == MD_TABLE_HEADER || type == MD_ORDERED_LIST || type == MD_UNORDERED_LIST || type == MD_LIST_ITEM) {
+    return false;
+  }
+  return true;
 }
 
 static void gb_markdown_paragraph(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
-  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
-  if (content == nullptr || content->size == 0 || (content->size == 1 && content->data[0] == '\n')) {
+  if (collector->empty()) {
     return;
   }
-  collector->push_back(greenbar::new_leaf(greenbar::MD_TEXT, content));
-  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
+  ParagraphNode* pn = new ParagraphNode();
+  while (!collector->empty()) {
+    auto last_node = collector->back();
+    NodeType type = last_node->get_type();
+    if (!is_valid_paragraph_child(type)) {
+      break;
+    }
+    collector->pop_back();
+    if (last_node->line_terminator()) {
+      pn->add_child(new EOLNode());
+    }
+    pn->add_child(last_node);
+  }
+  if (pn->empty()) {
+    delete pn;
+  } else {
+    pn->terminates_line(true);
+    collector->push_back(pn);
+  }
 }
 
 static int gb_markdown_autolink(hoedown_buffer *ob, const hoedown_buffer *link, hoedown_autolink_type type, const hoedown_renderer_data *data) {
+  if (link == nullptr) {
+    return 1;
+  }
   auto collector = get_collector(data);
-  collector->push_back(greenbar::new_leaf(greenbar::MD_TEXT, link));
+  auto link_text = hoedown_buffer_to_string(link);
+  collector->push_back(new LinkNode(link_text, link_text));
   return 1;
 }
 
@@ -175,117 +201,173 @@ static int gb_markdown_codespan(hoedown_buffer *ob, const hoedown_buffer *text, 
     return 1;
   }
   auto collector = get_collector(data);
-  collector->push_back(greenbar::new_leaf(greenbar::MD_FIXED_WIDTH, text));
+  collector->push_back(new FixedWidthNode(hoedown_buffer_to_string(text)));
   return 1;
 }
 
 static int gb_markdown_emphasis(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
-  if (content->size == 0) {
-    set_previous(data, greenbar::MD_TEXT, greenbar::MD_ITALICS);
+  auto collector = get_collector(data);
+  if (content == nullptr || content->size == 0) {
+    TextNode* tn = dynamic_cast<TextNode*>(collector->back());
+    if (tn) {
+      ItalicsNode* italn = tn->to_italics();
+      collector->pop_back();
+      collector->push_back(italn);
+      delete tn;
+    }
   } else {
     auto collector = get_collector(data);
-    collector->push_back(greenbar::new_leaf(greenbar::MD_ITALICS, content));
+    collector->push_back(new ItalicsNode(hoedown_buffer_to_string(content)));
   }
   return 1;
 }
 
 static int gb_markdown_double_emphasis(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
-  if (content->size == 0) {
-    set_previous(data, greenbar::MD_TEXT, greenbar::MD_BOLD);
+  auto collector = get_collector(data);
+  if (content == nullptr || content->size == 0) {
+    TextNode* tn = dynamic_cast<TextNode*>(collector->back());
+    if (tn) {
+      BoldNode* bn = tn->to_bold();
+      collector->pop_back();
+      collector->push_back(bn);
+      delete tn;
+    }
   } else {
-    auto collector = get_collector(data);
-    collector->push_back(greenbar::new_leaf(greenbar::MD_BOLD, content));
+    collector->push_back(new BoldNode(hoedown_buffer_to_string(content)));
+  }
+  return 1;
+}
+
+static int gb_markdown_link(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_buffer *url, const hoedown_buffer *link,
+                            const hoedown_renderer_data *data) {
+  auto collector = get_collector(data);
+  MarkdownNode* last_node = nullptr;
+  if (!collector->empty()) {
+    last_node = collector->back();
+  }
+  if (last_node == nullptr || last_node->get_type() != MD_TEXT) {
+    std::string url_text = hoedown_buffer_to_string(url);
+    std::string link_text = hoedown_buffer_to_string(link);
+    collector->push_back(new LinkNode(link_text, url_text));
+  } else {
+    TextNode* tn = dynamic_cast<TextNode*>(last_node);
+    if (tn) {
+      LinkNode* ln = tn->to_link();
+      ln->put_attribute(ATTR_URL, AttributeValue(hoedown_buffer_to_string(url)));
+      collector->pop_back();
+      collector->push_back(ln);
+      delete tn;
+    }
   }
   return 1;
 }
 
 static int gb_markdown_linebreak(hoedown_buffer *ob, const hoedown_renderer_data *data) {
-  auto collector = get_collector(data);
-  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
-  return 1;
-}
-
-static int gb_markdown_link(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_buffer *link, const hoedown_buffer *title,
-                            const hoedown_renderer_data *data) {
-  auto collector = get_collector(data);
-  if (collector->empty()) {
-    collector->push_back(greenbar::new_leaf(greenbar::MD_LINK, title, link));
-  } else {
-    auto last_info = greenbar::as_leaf(collector->back());
-    if (last_info != nullptr && last_info->get_type() == greenbar::MD_TEXT) {
-      last_info->set_type(greenbar::MD_LINK);
-      last_info->set_url(std::string((char*)link->data, link->size));
-    } else {
-      collector->push_back(greenbar::new_leaf(greenbar::MD_LINK, title, link));
-    }
-  }
-  return 1;
-}
+   auto collector = get_collector(data);
+   if (!collector->empty()) {
+     auto last_node = collector->back();
+     last_node->terminates_line(true);
+   }
+   return 1;
+ }
 
 static void gb_markdown_normal_text(hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_renderer_data *data) {
+  if (text == nullptr) {
+    return;
+  }
+  TextNode* tn = nullptr;
   auto collector = get_collector(data);
   switch(text->size) {
   case 0:
     break;
-  case 1:
-    if (memcmp(text->data, "\n", 1) == 0) {
-      collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_EOL));
-      break;
-    }
   default:
-    collector->push_back(greenbar::new_leaf(greenbar::MD_TEXT, text));
-    break;
+    if (text->data[0] == '\n') {
+      if (!collector->empty()) {
+        auto last_node = collector->back();
+        last_node->terminates_line(true);
+        if (text->size == 1) {
+          break;
+        }
+        tn = new TextNode(hoedown_buffer_to_string(text, 1, text->size - 1));
+      } else {
+        tn = new TextNode(hoedown_buffer_to_string(text));
+      }
+    } else {
+      auto last_char_idx = text->size - 1;
+      if (text->data[last_char_idx] == '\n') {
+        tn = new TextNode(hoedown_buffer_to_string(text, 0, last_char_idx - 1));
+        tn->terminates_line(true);
+      } else {
+        tn = new TextNode(hoedown_buffer_to_string(text));
+      }
+    }
   }
+  if (tn == nullptr) {
+    return;
+  }
+  collector->push_back(tn);
 }
 
 static void gb_markdown_list(hoedown_buffer *ob, const hoedown_buffer *content,
                              hoedown_list_flags flags, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
-  if (collector->empty()) {
-    return;
-  }
-  auto list_type = greenbar::MD_UNORDERED_LIST;
+  MarkdownNodeContainer *list = nullptr;
   if (flags & HOEDOWN_LIST_ORDERED) {
-    list_type = greenbar::MD_ORDERED_LIST;
+    list = new OrderedListNode();
+  } else {
+    list = new UnorderedListNode();
   }
-  auto item = new greenbar::MarkdownParentInfo(list_type);
-  auto child = collector->back();
-  while (child->get_type() == greenbar::MD_LIST_ITEM) {
-    collector->pop_back();
-    item->add_child(child);
-    if (collector->empty()) {
+  while (!collector->empty()) {
+    auto last_node = collector->back();
+    if (last_node->get_type() != MD_LIST_ITEM) {
       break;
     }
-    child = collector->back();
+    collector->pop_back();
+    list->add_child(last_node);
   }
-  collector->push_back(item);
+  if (list->empty()) {
+    delete list;
+  } else {
+    collector->push_back(list);
+  }
 }
 
 static void gb_markdown_listitem(hoedown_buffer *ob, const hoedown_buffer *content, hoedown_list_flags flags, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
-  if (collector->empty()) {
-    return;
-  }
-  auto item = new greenbar::MarkdownParentInfo(greenbar::MD_LIST_ITEM);
-  auto child = collector->back();
-  if (child->get_type() == greenbar::MD_EOL) {
+  auto item = new ListItemNode();
+  if (!collector->empty()) {
+    auto first_child = collector->back();
+    auto first_child_type = first_child->get_type();
+    if (first_child_type == MD_LIST_ITEM) {
+      return;
+    }
     collector->pop_back();
-    item->add_child(child);
-    while (true) {
-      if(collector->empty()) {
+    item->add_child(first_child);
+    while (!collector->empty()) {
+      auto child = collector->back();
+      auto child_type = child->get_type();
+      if (child_type == MD_LIST_ITEM ||
+          ((first_child_type == MD_PARAGRAPH || first_child_type == MD_TEXT) && child_type == MD_PARAGRAPH)) {
         break;
       }
-      child = collector->back();
-      if (child->get_type() == greenbar::MD_ORDERED_LIST || child->get_type() == greenbar::MD_UNORDERED_LIST ||
-          child->get_type() == greenbar::MD_LIST_ITEM || child->get_type() == greenbar::MD_EOL) {
+      if (child->line_terminator()) {
+        if (is_markdown_list(first_child_type) || first_child_type == MD_FIXED_WIDTH_BLOCK) {
+          collector->pop_back();
+          item->add_child(child);
+        }
         break;
       }
       collector->pop_back();
       item->add_child(child);
     }
   }
-  collector->push_back(item);
+  if (item->empty()) {
+    delete item;
+  } else {
+    collector->push_back(item);
+  }
 }
+
 
 static void gb_markdown_table(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
@@ -293,31 +375,35 @@ static void gb_markdown_table(hoedown_buffer *ob, const hoedown_buffer *content,
     return;
   }
   bool has_header = false;
-  auto table = new greenbar::MarkdownParentInfo(greenbar::MD_TABLE);
+  TableNode* table = new TableNode();
   auto child = collector->back();
-  while (child->get_type() == greenbar::MD_TABLE_HEADER || child->get_type() == greenbar::MD_TABLE_ROW) {
+  while (child->get_type() == MD_TABLE_HEADER || child->get_type() == MD_TABLE_ROW) {
     collector->pop_back();
-    if (child->get_type() == greenbar::MD_TABLE_HEADER) {
+    if (child->get_type() == MD_TABLE_HEADER) {
       has_header = true;
     } else {
       table->add_child(child);
-      if (collector->empty()) {
-        break;
-      }
+    }
+    if (collector->empty()) {
+      break;
     }
     child = collector->back();
   }
   if (has_header) {
-    table->set_child_type(table->last_child(), greenbar::MD_TABLE_ROW, greenbar::MD_TABLE_HEADER);
+    table->mark_header();
   }
-  collector->push_back(table);
+  if (table->empty()) {
+    delete table;
+  } else {
+    collector->push_back(table);
+  }
 }
 static void gb_markdown_table_header(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
   auto collector = get_collector(data);
   if (collector->empty()) {
     return;
   }
-  collector->push_back(new greenbar::MarkdownLeafInfo(greenbar::MD_TABLE_HEADER));
+  collector->push_back(new TableHeaderNode());
 }
 
 static void gb_markdown_table_row(hoedown_buffer *ob, const hoedown_buffer *content, const hoedown_renderer_data *data) {
@@ -325,17 +411,21 @@ static void gb_markdown_table_row(hoedown_buffer *ob, const hoedown_buffer *cont
   if (collector->empty()) {
     return;
   }
-  auto row = new greenbar::MarkdownParentInfo(greenbar::MD_TABLE_ROW);
-  auto child = collector->back();
-  while (child->get_type() == greenbar::MD_TABLE_CELL) {
-    collector->pop_back();
-    row->add_child(child);
-    if (collector->empty()) {
+  TableRowNode* row = new TableRowNode();
+  while (!collector->empty()) {
+    auto child = collector->back();
+    if (child->get_type() == MD_TABLE_CELL) {
+      collector->pop_back();
+      row->add_child(child);
+    } else {
       break;
     }
-    child = collector->back();
   }
-  collector->push_back(row);
+  if (row->empty()) {
+    delete row;
+  } else {
+    collector->push_back(row);
+  }
 }
 
 static void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *content, hoedown_table_flags flags, const hoedown_renderer_data *data) {
@@ -343,39 +433,33 @@ static void gb_markdown_table_cell(hoedown_buffer *ob, const hoedown_buffer *con
   if (collector->empty()) {
     return;
   }
-  auto cell = new greenbar::MarkdownParentInfo(greenbar::MD_TABLE_CELL);
-  while (true) {
-    if (collector->empty()) {
-      break;
-    }
+  TableCellNode* cell = new TableCellNode();
+  bool table_done = false;
+  while (!collector->empty() && !table_done) {
     auto child = collector->back();
-    bool table_done = false;
     switch(child->get_type()) {
-    case greenbar::MD_TABLE_CELL:
-    case greenbar::MD_TABLE_ROW:
-    case greenbar::MD_TABLE_HEADER:
-    case greenbar::MD_TABLE:
-    case greenbar::MD_EOL:
+    case MD_PARAGRAPH:
+    case MD_TABLE_CELL:
+    case MD_TABLE_ROW:
+    case MD_TABLE_HEADER:
+    case MD_TABLE:
       table_done = true;
       break;
     default:
-      table_done = false;
-      break;
+      collector->pop_back();
+      cell->add_child(child);
     }
-    if (table_done) {
-      break;
-    }
-    collector->pop_back();
-    cell->add_child(child);
   }
+  NodeAlignment alignment = ALIGN_NONE;
   if (flags & HOEDOWN_TABLE_ALIGN_LEFT) {
-    cell->set_alignment(greenbar::MD_ALIGN_LEFT);
+    alignment = ALIGN_LEFT;
   }
   if (flags & HOEDOWN_TABLE_ALIGN_RIGHT) {
-    cell->set_alignment(greenbar::MD_ALIGN_RIGHT);
+    alignment = ALIGN_RIGHT;
   }
   if (flags & HOEDOWN_TABLE_ALIGN_CENTER) {
-    cell->set_alignment(greenbar::MD_ALIGN_CENTER);
+    alignment = ALIGN_CENTER;
   }
+  cell->put_attribute(ATTR_ALIGNMENT, AttributeValue((int) alignment));
   collector->push_back(cell);
 }
