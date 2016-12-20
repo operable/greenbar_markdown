@@ -347,7 +347,7 @@ static void gb_markdown_listitem(hoedown_buffer *ob, const hoedown_buffer *conte
       auto child = collector->back();
       auto child_type = child->get_type();
       if (child_type == MD_LIST_ITEM ||
-          ((first_child_type == MD_PARAGRAPH || first_child_type == MD_TEXT) && child_type == MD_PARAGRAPH)) {
+          ((first_child_type == MD_PARAGRAPH || first_child_type == MD_TEXT || first_child_type == MD_FIXED_WIDTH) && child_type == MD_PARAGRAPH)) {
         break;
       }
       if (child->line_terminator()) {
