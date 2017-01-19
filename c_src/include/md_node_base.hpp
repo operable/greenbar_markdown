@@ -81,8 +81,9 @@ namespace greenbar {
 
     // Helper functions
     std::string type_to_string(NodeType type);
-    ERL_NIF_TERM type_to_atom(NodeType type, gb_priv_s* priv_data);
-    ERL_NIF_TERM alignment_to_atom(NodeAlignment align, gb_priv_s* priv_data);
+    ERL_NIF_TERM string_to_binary(ErlNifEnv* env, std::string value);
+    ERL_NIF_TERM type_to_binary(NodeType type, ErlNifEnv* env);
+    ERL_NIF_TERM alignment_to_binary(NodeAlignment align, ErlNifEnv* env);
     inline bool is_markdown_list(NodeType type) { return type == MD_ORDERED_LIST || type == MD_UNORDERED_LIST; }
 
     // Base Markdown node type

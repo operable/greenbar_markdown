@@ -5,10 +5,9 @@ namespace greenbar {
     ERL_NIF_TERM MarkdownNode::decorate_term(ErlNifEnv* env, ERL_NIF_TERM term) {
       if (text_.size() > 0) {
         ERL_NIF_TERM text;
-        gb_priv_s *priv_data = (gb_priv_s*) enif_priv_data(env);
         auto text_bin = enif_make_new_binary(env, text_.size(), &text);
         memcpy(text_bin, text_.c_str(), text_.size());
-        enif_make_map_put(env, term, priv_data->gb_atom_text, text, &term);
+        enif_make_map_put(env, term, string_to_binary(env, "text"), text, &term);
       }
       return term;
     }
@@ -62,10 +61,9 @@ namespace greenbar {
     }
 
     ERL_NIF_TERM MarkdownNode::to_erl_term(ErlNifEnv* env) {
-      gb_priv_s *priv_data = (gb_priv_s*) enif_priv_data(env);
-      ERL_NIF_TERM type_name = type_to_atom(this->type_, priv_data);
+      ERL_NIF_TERM type_name = type_to_binary(this->type_, env);
       ERL_NIF_TERM retval = enif_make_new_map(env);
-      enif_make_map_put(env, retval, priv_data->gb_atom_name, type_name, &retval);
+      enif_make_map_put(env, retval, string_to_binary(env, "name"), type_name, &retval);
       return decorate_term(env, retval);
     }
 
@@ -84,8 +82,7 @@ namespace greenbar {
     }
     ERL_NIF_TERM MarkdownNodeContainer::decorate_term(ErlNifEnv* env, ERL_NIF_TERM term) {
       auto child_terms = children_to_term_list(env);
-      gb_priv_s *priv_data = (gb_priv_s*) enif_priv_data(env);
-      enif_make_map_put(env, term, priv_data->gb_atom_children, child_terms, &term);
+      enif_make_map_put(env, term, string_to_binary(env, "children"), child_terms, &term);
       return term;
     }
 

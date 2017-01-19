@@ -3,42 +3,49 @@
 
 namespace greenbar {
   namespace node2 {
-    ERL_NIF_TERM type_to_atom(NodeType type, gb_priv_s* priv_data) {
+    ERL_NIF_TERM string_to_binary(ErlNifEnv* env, std::string value) {
+      ERL_NIF_TERM target;
+      auto bufsize = value.length();
+      auto buf = enif_make_new_binary(env, bufsize, &target);
+      memcpy(buf, value.c_str(), bufsize);
+      return target;
+    }
+    ERL_NIF_TERM type_to_binary(NodeType type, ErlNifEnv* env) {
       switch(type) {
       case MD_EOL:
-        return priv_data->gb_atom_newline;
+        return string_to_binary(env, "newline");
       case MD_PARAGRAPH:
-        return priv_data->gb_atom_paragraph;
+        return string_to_binary(env, "paragraph");
       case MD_TEXT:
-        return priv_data->gb_atom_text;
+        return string_to_binary(env, "text");
       case MD_FIXED_WIDTH:
-        return priv_data->gb_atom_fixed_width;
+        return string_to_binary(env, "fixed_width");
       case MD_FIXED_WIDTH_BLOCK:
-        return priv_data->gb_atom_fixed_width_block;
+        return string_to_binary(env, "fixed_width_block");
       case MD_HEADER:
-        return priv_data->gb_atom_header;
+        return string_to_binary(env, "header");
       case MD_ITALICS:
-        return priv_data->gb_atom_italics;
+        return string_to_binary(env, "italics");
       case MD_BOLD:
-        return priv_data->gb_atom_bold;
+        return string_to_binary(env, "bold");
       case MD_LINK:
-        return priv_data->gb_atom_link;
+        return string_to_binary(env, "link");
       case MD_LIST_ITEM:
-        return priv_data->gb_atom_list_item;
+        return string_to_binary(env, "list_item");
       case MD_ORDERED_LIST:
-        return priv_data->gb_atom_ordered_list;
+        return string_to_binary(env, "ordered_list");
       case MD_UNORDERED_LIST:
-        return priv_data->gb_atom_unordered_list;
+        return string_to_binary(env, "unordered_list");
       case MD_TABLE_CELL:
-        return priv_data->gb_atom_table_cell;
+        return string_to_binary(env, "table_cell");
       case MD_TABLE_ROW:
-        return priv_data->gb_atom_table_row;
+        return string_to_binary(env, "table_row");
       case MD_TABLE_HEADER:
-        return priv_data->gb_atom_table_header;
+        return string_to_binary(env, "table_header");
       case MD_TABLE:
-        return priv_data->gb_atom_table;
+        return string_to_binary(env, "table");
       default:
-        return priv_data->gb_atom_text;
+        return string_to_binary(env, "text");
       }
     }
 
@@ -68,14 +75,14 @@ namespace greenbar {
       }
     }
 
-    ERL_NIF_TERM alignment_to_atom(NodeAlignment align, gb_priv_s* priv_data) {
+    ERL_NIF_TERM alignment_to_binary(NodeAlignment align, ErlNifEnv* env) {
       switch(align) {
       case ALIGN_RIGHT:
-        return priv_data->gb_atom_right;
+        return string_to_binary(env, "right");
       case ALIGN_CENTER:
-        return priv_data->gb_atom_center;
+        return string_to_binary(env, "center");
       default:
-        return priv_data->gb_atom_left;
+        return string_to_binary(env, "left");
       }
     }
 
