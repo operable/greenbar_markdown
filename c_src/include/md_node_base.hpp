@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include <cstring>
 #include <vector>
 #include "erl_nif.h"
 #include "gb_common.hpp"
